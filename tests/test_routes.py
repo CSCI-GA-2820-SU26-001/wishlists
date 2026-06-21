@@ -24,7 +24,7 @@ import logging
 from unittest import TestCase
 from wsgi import app
 from service.common import status
-from service.models import db, YourResourceModel
+from service.models import db, Wishlist
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -56,7 +56,7 @@ class TestYourResourceService(TestCase):
     def setUp(self):
         """Runs before each test"""
         self.client = app.test_client()
-        db.session.query(YourResourceModel).delete()  # clean up the last tests
+        db.session.query(Wishlist).delete()  # clean up the last tests
         db.session.commit()
 
     def tearDown(self):
@@ -71,5 +71,10 @@ class TestYourResourceService(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertIsNotNone(data)
+        self.assertEqual(data["name"], "Wishlists Service")
+        self.assertEqual(data["version"], "1.0.0")
+        self.assertEqual(data["list_url"], "/wishlists")
 
-    # Todo: Add your test cases here...
+    # more cases will be added in the future

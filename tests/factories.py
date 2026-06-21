@@ -2,20 +2,42 @@
 Test Factory to make fake objects for testing
 """
 
-import factory
-from service.models import Wishlist
+from factory import Factory, Faker, SubFactory, Sequence, post_generation
+from factory.fuzzy import FuzzyChoice, FuzzyInteger
+from service.models import Wishlist, Item
 
 
-class WishlistFactory(factory.Factory):
+class WishlistFactory(Factory):
     """Creates fake Wishlists"""
 
     class Meta:
         model = Wishlist
 
-    id = factory.Sequence(lambda n: n)
-    name = factory.Sequence(lambda n: f"Wishlist {n}")
-    customer_id = factory.Sequence(lambda n: n + 1000)
+    id = Sequence(lambda n: n)
+    name = Sequence(lambda n: f"Wishlist {n}")
+    customer_id = FuzzyInteger(1, 1000)
+    description = FuzzyChoice(choices=["Some descriptions ...", ""])
+
+    @post_generation
+    def items(
+        self, create, extracted, **kwargs
+    ):  # pylint: disable=method-hidden, unused-argument
+        """Creates the addresses list"""
+        if not create:
+            return
+
+        if extracted:
+            self.items = extracted
 
 
+class ItemFactory(Factory):
+    """Creates fake Items"""
 
-YourResourceModelFactory = WishlistFactory
+    class Meta:
+        model = Item
+
+    id = Sequence(lambda n: n)
+    wishlist_id = None
+    name = Faker("word")
+    quantity = FuzzyInteger(1, 100)
+    wishlist = SubFactory(WishlistFactory)

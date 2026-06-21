@@ -1,5 +1,5 @@
 """
-Models for YourResourceModel
+Models for Wishlist
 
 All of the models are stored in this module
 """
@@ -14,84 +14,96 @@ db = SQLAlchemy()
 
 
 class DataValidationError(Exception):
-    """Used for an data validation errors when deserializing"""
+    """Used for data validation errors when deserializing"""
 
 
-class YourResourceModel(db.Model):
+class Wishlist(db.Model):
     """
-    Class that represents a YourResourceModel
+    Class that represents a Wishlist
     """
 
     ##################################################
     # Table Schema
     ##################################################
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(63))
+    __tablename__ = "wishlists"
 
-    # Todo: Place the rest of your schema here...
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(63), nullable=False)
+    customer_id = db.Column(db.Integer, nullable=False)
 
     def __repr__(self):
-        return f"<YourResourceModel {self.name} id=[{self.id}]>"
+        return f"<Wishlist {self.name} id=[{self.id}]>"
 
     def create(self):
         """
-        Creates a YourResourceModel to the database
+        Creates a Wishlist in the database
         """
-        logger.info("Creating %s", self.name)
+        logger.info("Creating wishlist: %s", self.name)
         self.id = None  # pylint: disable=invalid-name
         try:
             db.session.add(self)
             db.session.commit()
-        except Exception as e:
+        except Exception as error:
             db.session.rollback()
-            logger.error("Error creating record: %s", self)
-            raise DataValidationError(e) from e
+            logger.error("Error creating wishlist: %s", self)
+            raise DataValidationError(error) from error
 
     def update(self):
         """
-        Updates a YourResourceModel to the database
+        Updates a Wishlist in the database
         """
-        logger.info("Saving %s", self.name)
+        logger.info("Saving wishlist: %s", self.name)
+        if not self.id:
+            raise DataValidationError("Update called with empty ID field")
         try:
             db.session.commit()
-        except Exception as e:
+        except Exception as error:
             db.session.rollback()
-            logger.error("Error updating record: %s", self)
-            raise DataValidationError(e) from e
+            logger.error("Error updating wishlist: %s", self)
+            raise DataValidationError(error) from error
 
     def delete(self):
-        """Removes a YourResourceModel from the data store"""
-        logger.info("Deleting %s", self.name)
+        """
+        Removes a Wishlist from the database
+        """
+        logger.info("Deleting wishlist: %s", self.name)
         try:
             db.session.delete(self)
             db.session.commit()
-        except Exception as e:
+        except Exception as error:
             db.session.rollback()
-            logger.error("Error deleting record: %s", self)
-            raise DataValidationError(e) from e
+            logger.error("Error deleting wishlist: %s", self)
+            raise DataValidationError(error) from error
 
     def serialize(self):
-        """Serializes a YourResourceModel into a dictionary"""
-        return {"id": self.id, "name": self.name}
+        """
+        Serializes a Wishlist into a dictionary
+        """
+        return {
+            "id": self.id,
+            "name": self.name,
+            "customer_id": self.customer_id,
+        }
 
     def deserialize(self, data):
         """
-        Deserializes a YourResourceModel from a dictionary
+        Deserializes a Wishlist from a dictionary
 
         Args:
-            data (dict): A dictionary containing the resource data
+            data (dict): A dictionary containing the wishlist data
         """
         try:
             self.name = data["name"]
+            self.customer_id = data["customer_id"]
         except AttributeError as error:
             raise DataValidationError("Invalid attribute: " + error.args[0]) from error
         except KeyError as error:
             raise DataValidationError(
-                "Invalid YourResourceModel: missing " + error.args[0]
+                "Invalid Wishlist: missing " + error.args[0]
             ) from error
         except TypeError as error:
             raise DataValidationError(
-                "Invalid YourResourceModel: body of request contained bad or no data "
+                "Invalid Wishlist: body of request contained bad or no data "
                 + str(error)
             ) from error
         return self
@@ -102,22 +114,32 @@ class YourResourceModel(db.Model):
 
     @classmethod
     def all(cls):
-        """Returns all of the YourResourceModels in the database"""
-        logger.info("Processing all YourResourceModels")
+        """
+        Returns all of the Wishlists in the database
+        """
+        logger.info("Processing all Wishlists")
         return cls.query.all()
 
     @classmethod
     def find(cls, by_id):
-        """Finds a YourResourceModel by it's ID"""
+        """
+        Finds a Wishlist by its ID
+        """
         logger.info("Processing lookup for id %s ...", by_id)
         return cls.query.session.get(cls, by_id)
 
     @classmethod
     def find_by_name(cls, name):
-        """Returns all YourResourceModels with the given name
+        """
+        Returns all Wishlists with the given name
 
         Args:
-            name (string): the name of the YourResourceModels you want to match
+            name (string): the name of the Wishlists you want to match
         """
         logger.info("Processing name query for %s ...", name)
-        return cls.query.filter(cls.name == name)
+        return cls.query.filter(cls.name == name).all()
+
+
+# Temporary alias so old template code in routes.py does not break yet.
+# We will remove this later after routes.py is updated to use Wishlist directly.
+YourResourceModel = Wishlist

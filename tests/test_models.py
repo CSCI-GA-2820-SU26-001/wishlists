@@ -1,21 +1,11 @@
 ######################################################################
 # Copyright 2016, 2024 John J. Rofrano. All Rights Reserved.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-# https://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# Licensed under the Apache License, Version 2.0
 ######################################################################
 
 """
-Test cases for Pet Model
+Test cases for Wishlist Model
 """
 
 # pylint: disable=duplicate-code
@@ -23,8 +13,8 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
-from service.models import YourResourceModel, DataValidationError, db
-from .factories import YourResourceModelFactory
+from service.models import Wishlist, DataValidationError, db
+from .factories import WishlistFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -32,11 +22,11 @@ DATABASE_URI = os.getenv(
 
 
 ######################################################################
-#  YourResourceModel   M O D E L   T E S T   C A S E S
+#  W I S H L I S T   M O D E L   T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceModel(TestCase):
-    """Test Cases for YourResourceModel Model"""
+class TestWishlistModel(TestCase):
+    """Test Cases for Wishlist Model"""
 
     @classmethod
     def setUpClass(cls):
@@ -54,7 +44,7 @@ class TestYourResourceModel(TestCase):
 
     def setUp(self):
         """This runs before each test"""
-        db.session.query(YourResourceModel).delete()  # clean up the last tests
+        db.session.query(Wishlist).delete()
         db.session.commit()
 
     def tearDown(self):
@@ -65,15 +55,107 @@ class TestYourResourceModel(TestCase):
     #  T E S T   C A S E S
     ######################################################################
 
-    def test_example_replace_this(self):
-        """It should create a YourResourceModel"""
-        # Todo: Remove this test case example
-        resource = YourResourceModelFactory()
-        resource.create()
-        self.assertIsNotNone(resource.id)
-        found = YourResourceModel.all()
-        self.assertEqual(len(found), 1)
-        data = YourResourceModel.find(resource.id)
-        self.assertEqual(data.name, resource.name)
+    def test_create_a_wishlist(self):
+        """It should Create a wishlist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
 
-    # Todo: Add your test cases here...
+        self.assertIsNotNone(wishlist.id)
+
+        found = Wishlist.all()
+        self.assertEqual(len(found), 1)
+
+        data = Wishlist.find(wishlist.id)
+        self.assertEqual(data.name, wishlist.name)
+        self.assertEqual(data.customer_id, wishlist.customer_id)
+
+    def test_read_a_wishlist(self):
+        """It should Read a wishlist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        found = Wishlist.find(wishlist.id)
+
+        self.assertIsNotNone(found)
+        self.assertEqual(found.id, wishlist.id)
+        self.assertEqual(found.name, wishlist.name)
+        self.assertEqual(found.customer_id, wishlist.customer_id)
+
+    def test_update_a_wishlist(self):
+        """It should Update a wishlist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        self.assertIsNotNone(wishlist.id)
+
+        wishlist.name = "Updated Wishlist"
+        wishlist.update()
+
+        found = Wishlist.find(wishlist.id)
+        self.assertEqual(found.name, "Updated Wishlist")
+
+    def test_delete_a_wishlist(self):
+        """It should Delete a wishlist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        self.assertEqual(len(Wishlist.all()), 1)
+
+        wishlist.delete()
+
+        self.assertEqual(len(Wishlist.all()), 0)
+
+    def test_list_all_wishlists(self):
+        """It should List all wishlists"""
+        wishlists = WishlistFactory.create_batch(5)
+
+        for wishlist in wishlists:
+            wishlist.create()
+
+        found = Wishlist.all()
+        self.assertEqual(len(found), 5)
+
+    def test_serialize_a_wishlist(self):
+        """It should Serialize a wishlist"""
+        wishlist = WishlistFactory()
+        data = wishlist.serialize()
+
+        self.assertNotEqual(data, None)
+        self.assertIn("id", data)
+        self.assertIn("name", data)
+        self.assertIn("customer_id", data)
+        self.assertEqual(data["name"], wishlist.name)
+        self.assertEqual(data["customer_id"], wishlist.customer_id)
+
+    def test_deserialize_a_wishlist(self):
+        """It should Deserialize a wishlist"""
+        data = {
+            "name": "Birthday Wishlist",
+            "customer_id": 1001,
+        }
+
+        wishlist = Wishlist()
+        wishlist.deserialize(data)
+
+        self.assertEqual(wishlist.name, "Birthday Wishlist")
+        self.assertEqual(wishlist.customer_id, 1001)
+
+    def test_deserialize_with_missing_name(self):
+        """It should not Deserialize a wishlist without a name"""
+        data = {
+            "customer_id": 1001,
+        }
+
+        wishlist = Wishlist()
+
+        self.assertRaises(DataValidationError, wishlist.deserialize, data)
+
+    def test_deserialize_with_missing_customer_id(self):
+        """It should not Deserialize a wishlist without a customer_id"""
+        data = {
+            "name": "Birthday Wishlist",
+        }
+
+        wishlist = Wishlist()
+
+        self.assertRaises(DataValidationError, wishlist.deserialize, data)

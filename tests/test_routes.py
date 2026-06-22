@@ -71,5 +71,10 @@ class TestYourResourceService(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertIsNotNone(data)
+        self.assertEqual(data["name"], "Wishlists Service")
+        self.assertEqual(data["version"], "1.0.0")
+        self.assertEqual(data["list_url"], "/wishlists")
 
-    # Todo: Add your test cases here...
+    # more cases will be added in the future

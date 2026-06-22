@@ -21,9 +21,9 @@ This service implements a REST API that allows you to Create, Read, Update
 and Delete Wishlist
 """
 
-from flask import jsonify, request, url_for, abort
+from flask import jsonify
 from flask import current_app as app  # Import Flask application
-from service.models import Wishlist, Item
+
 from service.common import status  # HTTP Status Codes
 
 
@@ -33,8 +33,13 @@ from service.common import status  # HTTP Status Codes
 @app.route("/")
 def index():
     """Root URL response"""
+    app.logger.info("Request for Root URL")
     return (
-        "Reminder: return some useful information in json format about the service here",
+        jsonify(
+            name="Wishlists Service",
+            version="1.0.0",
+            list_url="/wishlists",
+        ),
         status.HTTP_200_OK,
     )
 
@@ -43,4 +48,4 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# Todo: Place your REST API code here ...
+# more

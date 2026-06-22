@@ -21,9 +21,9 @@ This service implements a REST API that allows you to Create, Read, Update
 and Delete Wishlist
 """
 
-from flask import jsonify
+from flask import jsonify, request, url_for, abort
 from flask import current_app as app  # Import Flask application
-
+from service.models import Wishlist, Item
 from service.common import status  # HTTP Status Codes
 
 
@@ -48,4 +48,50 @@ def index():
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
 
-# more
+
+######################################################################
+# CREATE A NEW WISHLIST
+######################################################################
+@app.route("/wishlists", methods=["POST"])
+def create_accounts():
+    """
+    Creates a Wishlist
+    This endpoint will create a Wishlist based the data in the body that is posted
+    """
+    app.logger.info("Creating a wishlist ...")
+    check_content_type("application/json")
+
+    # Create the account
+    wishlist = Wishlist()
+    wishlist.deserialize(request.get_json())
+    wishlist.create()
+
+    # Create a message to return
+    message = wishlist.serialize()
+    # location_url = url_for("get_wishlists", wishlist_id=wishlist.id, _external=True)
+
+    # return message, status.HTTP_201_CREATED, {"Location": location_url}
+    return message, status.HTTP_201_CREATED
+
+
+######################################################################
+#  U T I L I T Y   F U N C T I O N S
+######################################################################
+
+
+def check_content_type(content_type):
+    """Checks that the media type is correct"""
+    if "Content-Type" not in request.headers:
+        app.logger.error("No Content-Type specified.")
+        abort(
+            status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            f"Content-Type must be {content_type}",
+        )
+
+    if request.headers["Content-Type"] == content_type:
+        return
+
+    app.logger.error("Invalid Content-Type: %s", request.headers["Content-Type"])
+    abort(
+        status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, f"Content-Type must be {content_type}"
+    )

@@ -27,7 +27,6 @@ from tests.factories import WishlistFactory, ItemFactory
 from service.common import status
 from service.models import db, Wishlist
 
-
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
@@ -107,10 +106,8 @@ class BaseTestCase(TestCase):
             "Description does not match",
         )
         self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
-    
 
     def test_read_item(self):
-
         """It should read an Item"""
 
         # Create a wishlist directly
@@ -127,17 +124,12 @@ class BaseTestCase(TestCase):
 
         # Read the item through API
 
-        resp = self.client.get(
-
-            f"/wishlists/{wishlist.id}/items/{item.id}"
-
-        )
+        resp = self.client.get(f"/wishlists/{wishlist.id}/items/{item.id}")
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
         data = resp.get_json()
         self.assertEqual(len(data), 2)
-    
 
     def test_list_items(self):
         """It should list all items in a wishlist"""
@@ -151,9 +143,7 @@ class BaseTestCase(TestCase):
         item2 = ItemFactory(wishlist=wishlist)
         item2.create()
 
-        resp = self.client.get(
-            f"/wishlists/{wishlist.id}/items"
-        )
+        resp = self.client.get(f"/wishlists/{wishlist.id}/items")
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
@@ -161,16 +151,13 @@ class BaseTestCase(TestCase):
 
         self.assertEqual(len(data), 2)
 
-
     def test_list_items_empty(self):
         """It should return an empty list"""
 
         wishlist = WishlistFactory()
         wishlist.create()
 
-        resp = self.client.get(
-            f"/wishlists/{wishlist.id}/items"
-        )
+        resp = self.client.get(f"/wishlists/{wishlist.id}/items")
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
@@ -186,20 +173,16 @@ class BaseTestCase(TestCase):
 
         self.assertEqual(data["quantity"], item.quantity)
 
-
     def test_read_item_not_found(self):
         """It should return 404 for missing item"""
 
         wishlist = WishlistFactory()
         wishlist.create()
 
-        resp = self.client.get(
-            f"/wishlists/{wishlist.id}/items/99999"
-        )
+        resp = self.client.get(f"/wishlists/{wishlist.id}/items/99999")
 
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-   
     def test_add_item(self):
         """It should add an Item to a Wishlist"""
 
@@ -228,9 +211,7 @@ class BaseTestCase(TestCase):
 
         self.assertEqual(data["wishlist_id"], created_wishlist["id"])
         self.assertEqual(data["name"], item_data["name"])
-        self.assertEqual(data["quantity"], item_data["quantity"])    
-
-
+        self.assertEqual(data["quantity"], item_data["quantity"])
 
         # # Check that the location header was correct by getting it
         # resp = self.client.get(location)
@@ -251,4 +232,41 @@ class BaseTestCase(TestCase):
         # )
         # self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
 
-    # more cases will be added in the future
+    def test_delete_item(self):
+        """It should Delete an Item"""
+        # create an item
+        wishlist = self._create_wishlists(1)[0]
+        item = ItemFactory()
+        resp = self.client.post(
+            f"{BASE_URL}/{wishlist.id}/items", json=item.serialize()
+        )
+        # make sure the item is created
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        data = resp.get_json()
+        logging.debug(data)
+        item_id = data["id"]
+
+        # send delete request
+        resp = self.client.delete(f"{BASE_URL}/{wishlist.id}/items/{item_id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        # retrieve it back and make sure address is not there
+        resp = self.client.get(f"{BASE_URL}/{wishlist.id}/items/{item_id}")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    # helper function
+    def _create_wishlists(self, count):
+        """Factory method to create wishlists in bulk"""
+        wishlists = []
+        for _ in range(count):
+            wishlist = WishlistFactory()
+            resp = self.client.post(BASE_URL, json=wishlist.serialize())
+            self.assertEqual(
+                resp.status_code,
+                status.HTTP_201_CREATED,
+                "Could not create test Wishlist",
+            )
+            new_wishlist = resp.get_json()
+            wishlist.id = new_wishlist["id"]
+            wishlists.append(wishlist)
+        return wishlists

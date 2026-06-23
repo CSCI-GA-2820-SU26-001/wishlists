@@ -106,6 +106,56 @@ class BaseTestCase(TestCase):
             "Description does not match",
         )
         self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
+    
+
+    def test_read_item(self):
+
+        """It should read an Item"""
+
+        # Create a wishlist directly
+
+        wishlist = WishlistFactory()
+
+        wishlist.create()
+
+        # Create an item directly
+
+        item = ItemFactory(wishlist=wishlist)
+
+        item.create()
+
+        # Read the item through API
+
+        resp = self.client.get(
+
+            f"/wishlists/{wishlist.id}/items/{item.id}"
+
+        )
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+
+        self.assertEqual(data["id"], item.id)
+
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+
+        self.assertEqual(data["name"], item.name)
+
+        self.assertEqual(data["quantity"], item.quantity)
+
+
+    def test_read_item_not_found(self):
+        """It should return 404 for missing item"""
+
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        resp = self.client.get(
+            f"/wishlists/{wishlist.id}/items/99999"
+        )
+
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
         # # Check that the location header was correct by getting it
         # resp = self.client.get(location)

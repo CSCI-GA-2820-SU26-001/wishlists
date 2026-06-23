@@ -53,7 +53,7 @@ def index():
 # CREATE A NEW WISHLIST
 ######################################################################
 @app.route("/wishlists", methods=["POST"])
-def create_accounts():
+def create_wishlists():
     """
     Creates a Wishlist
     This endpoint will create a Wishlist based the data in the body that is posted
@@ -61,7 +61,7 @@ def create_accounts():
     app.logger.info("Creating a wishlist ...")
     check_content_type("application/json")
 
-    # Create the account
+    # Create the wishlist
     wishlist = Wishlist()
     wishlist.deserialize(request.get_json())
     wishlist.create()
@@ -72,6 +72,7 @@ def create_accounts():
 
     # return message, status.HTTP_201_CREATED, {"Location": location_url}
     return message, status.HTTP_201_CREATED
+
 
 ######################################################################
 # READ AN ITEM
@@ -99,13 +100,12 @@ def get_item(wishlist_id, item_id):
     return item.serialize(), status.HTTP_200_OK
 
 
-
 ######################################################################
 # ADD AN ITEM TO A WISHLIST
 ######################################################################
 
-@app.route("/wishlists/<int:wishlist_id>/items", methods=["POST"])
 
+@app.route("/wishlists/<int:wishlist_id>/items", methods=["POST"])
 def create_item(wishlist_id):
     """Add an Item to a Wishlist"""
 
@@ -130,6 +130,7 @@ def create_item(wishlist_id):
 
     return item.serialize(), status.HTTP_201_CREATED
 
+
 ######################################################################
 # LIST ITEMS IN A WISHLIST
 ######################################################################
@@ -150,6 +151,29 @@ def list_items(wishlist_id):
         items.append(item.serialize())
 
     return items, status.HTTP_200_OK
+
+
+######################################################################
+# DELETE AN ITEM
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/items/<int:item_id>", methods=["DELETE"])
+def delete_items(wishlist_id, item_id):
+    """
+    Delete an Item
+
+    This endpoint will delete an Item based the id specified in the path
+    """
+    app.logger.info(
+        "Request to delete Item %s for Wishlist id: %s", (item_id, wishlist_id)
+    )
+
+    # See if the item exists and delete it if it does
+    item = Item.find(item_id)
+    if item:
+        item.delete()
+
+    return "", status.HTTP_204_NO_CONTENT
+
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S

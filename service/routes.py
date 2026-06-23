@@ -82,7 +82,6 @@ def create_accounts():
 @app.route("/wishlists/<int:wishlist_id>/items", methods=["POST"])
 
 def create_item(wishlist_id):
-
     """Add an Item to a Wishlist"""
 
     app.logger.info("Adding item to wishlist %s", wishlist_id)
@@ -92,14 +91,15 @@ def create_item(wishlist_id):
     wishlist = Wishlist.find(wishlist_id)
 
     if not wishlist:
-
         abort(status.HTTP_404_NOT_FOUND, "Wishlist not found")
+
+    data = request.get_json()
+
+    data["wishlist_id"] = wishlist_id
 
     item = Item()
 
-    item.deserialize(request.get_json())
-
-    item.wishlist_id = wishlist_id
+    item.deserialize(data)
 
     item.create()
 

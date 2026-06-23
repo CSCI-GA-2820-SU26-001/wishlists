@@ -92,6 +92,24 @@ class BaseTestCase(TestCase):
         data = resp.get_json()
         self.assertEqual(len(data), 2)
 
+    def test_get_wishlist(self):
+        """It should Read a single Wishlist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        resp = self.client.get(f"/wishlists/{wishlist.id}")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(data["id"], wishlist.id)
+        self.assertEqual(data["name"], wishlist.name)
+        self.assertEqual(data["customer_id"], wishlist.customer_id)
+    
+    def test_get_wishlist_not_found(self):
+        """It should not Read a Wishlist that does not exist"""
+        resp = self.client.get("/wishlists/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
     # more cases will be added in the future
     
     

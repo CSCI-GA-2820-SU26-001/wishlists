@@ -107,7 +107,7 @@ class BaseTestCase(TestCase):
             "Description does not match",
         )
         self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
-    
+
 
     def test_read_item(self):
 
@@ -135,9 +135,15 @@ class BaseTestCase(TestCase):
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
+
+
         data = resp.get_json()
-        self.assertEqual(len(data), 2)
-    
+        self.assertEqual(data["id"], item.id)
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+        self.assertEqual(data["name"], item.name)
+        self.assertEqual(data["quantity"], item.quantity)
+
+
 
     def test_list_items(self):
         """It should list all items in a wishlist"""
@@ -178,13 +184,7 @@ class BaseTestCase(TestCase):
 
         self.assertEqual(data, [])
 
-        self.assertEqual(data["id"], item.id)
 
-        self.assertEqual(data["wishlist_id"], wishlist.id)
-
-        self.assertEqual(data["name"], item.name)
-
-        self.assertEqual(data["quantity"], item.quantity)
 
 
     def test_read_item_not_found(self):
@@ -199,7 +199,7 @@ class BaseTestCase(TestCase):
 
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-   
+
     def test_add_item(self):
         """It should add an Item to a Wishlist"""
 
@@ -228,7 +228,7 @@ class BaseTestCase(TestCase):
 
         self.assertEqual(data["wishlist_id"], created_wishlist["id"])
         self.assertEqual(data["name"], item_data["name"])
-        self.assertEqual(data["quantity"], item_data["quantity"])    
+        self.assertEqual(data["quantity"], item_data["quantity"])
 
 
 

@@ -227,6 +227,36 @@ class BaseTestCase(TestCase):
         # )
         # self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
 
+
+
+    def test_update_item(self):
+        
+
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        item = ItemFactory(wishlist=wishlist)
+        item.create()
+
+        update_data = item.serialize()
+        update_data["name"] = "Updated Item"
+        update_data["quantity"] = 99
+
+        resp = self.client.put(
+            f"{BASE_URL}/{wishlist.id}/items/{item.id}",
+            json=update_data,
+        )
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+
+        self.assertEqual(data["id"], item.id)
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+        self.assertEqual(data["name"], "Updated Item")
+        self.assertEqual(data["quantity"], 99)
+
+
     def test_delete_item(self):
         """It should Delete an Item"""
         # create an item

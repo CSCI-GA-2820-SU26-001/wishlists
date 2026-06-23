@@ -153,6 +153,49 @@ def list_items(wishlist_id):
     return items, status.HTTP_200_OK
 
 
+
+
+
+######################################################################
+# UPDATE AN ITEM
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/items/<int:item_id>", methods=["PUT"])
+def update_item(wishlist_id, item_id):
+    """Update an Item in a Wishlist"""
+
+    app.logger.info(
+        "Request to update item %s from wishlist %s",
+        item_id,
+        wishlist_id,
+    )
+
+    check_content_type("application/json")
+
+    wishlist = Wishlist.find(wishlist_id)
+
+    if not wishlist:
+        abort(status.HTTP_404_NOT_FOUND, "Wishlist not found")
+
+    item = Item.find(item_id)
+
+    if not item or item.wishlist_id != wishlist_id:
+        abort(status.HTTP_404_NOT_FOUND, "Item not found")
+
+    data = request.get_json()
+    data["wishlist_id"] = wishlist_id
+
+    item.deserialize(data)
+    item.update()
+
+    return item.serialize(), status.HTTP_200_OK
+
+
+
+
+
+
+
+
 ######################################################################
 # DELETE AN ITEM
 ######################################################################

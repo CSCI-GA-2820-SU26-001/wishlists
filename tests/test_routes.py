@@ -27,6 +27,7 @@ from tests.factories import WishlistFactory, ItemFactory
 from service.common import status
 from service.models import db, Wishlist
 
+
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
@@ -135,6 +136,47 @@ class BaseTestCase(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
         data = resp.get_json()
+        self.assertEqual(len(data), 2)
+    
+
+    def test_list_items(self):
+        """It should list all items in a wishlist"""
+
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        item1 = ItemFactory(wishlist=wishlist)
+        item1.create()
+
+        item2 = ItemFactory(wishlist=wishlist)
+        item2.create()
+
+        resp = self.client.get(
+            f"/wishlists/{wishlist.id}/items"
+        )
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+
+        self.assertEqual(len(data), 2)
+
+
+    def test_list_items_empty(self):
+        """It should return an empty list"""
+
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        resp = self.client.get(
+            f"/wishlists/{wishlist.id}/items"
+        )
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+
+        self.assertEqual(data, [])
 
         self.assertEqual(data["id"], item.id)
 

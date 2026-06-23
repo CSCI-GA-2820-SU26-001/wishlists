@@ -130,7 +130,26 @@ def create_item(wishlist_id):
 
     return item.serialize(), status.HTTP_201_CREATED
 
+######################################################################
+# LIST ITEMS IN A WISHLIST
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/items", methods=["GET"])
+def list_items(wishlist_id):
+    """List all items in a wishlist"""
 
+    app.logger.info("Request to list items for wishlist %s", wishlist_id)
+
+    wishlist = Wishlist.find(wishlist_id)
+
+    if not wishlist:
+        abort(status.HTTP_404_NOT_FOUND, "Wishlist not found")
+
+    items = []
+
+    for item in wishlist.items:
+        items.append(item.serialize())
+
+    return items, status.HTTP_200_OK
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S

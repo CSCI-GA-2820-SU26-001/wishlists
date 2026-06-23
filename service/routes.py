@@ -21,9 +21,9 @@ This service implements a REST API that allows you to Create, Read, Update
 and Delete Wishlist
 """
 
-from flask import jsonify
 from flask import current_app as app  # Import Flask application
-
+from flask import jsonify, request, abort
+from service.models import Wishlist
 from service.common import status  # HTTP Status Codes
 
 
@@ -42,8 +42,19 @@ def index():
         ),
         status.HTTP_200_OK,
     )
+######################################################################
+# List Wishlists
+######################################################################
 
+@app.route("/wishlists", methods=["GET"])
+def list_wishlists():
+    """Returns all of the Wishlists"""
+    app.logger.info("Request to list Wishlists")
 
+    wishlists = Wishlist.all()
+    results = [wishlist.serialize() for wishlist in wishlists]
+
+    return jsonify(results), status.HTTP_200_OK
 ######################################################################
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################

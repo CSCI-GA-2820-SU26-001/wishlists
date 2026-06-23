@@ -25,6 +25,7 @@ from unittest import TestCase
 from wsgi import app
 from service.common import status
 from service.models import db, Wishlist
+from tests.factories import WishlistFactory
 
 DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
@@ -77,4 +78,20 @@ class TestYourResourceService(TestCase):
         self.assertEqual(data["version"], "1.0.0")
         self.assertEqual(data["list_url"], "/wishlists")
 
+    def test_list_wishlists(self):
+        """It should List all Wishlists"""
+        WishlistFactory().create()
+        WishlistFactory().create()
+
+        resp = self.client.get("/wishlists")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)
+
     # more cases will be added in the future
+    
+    
+
+
+

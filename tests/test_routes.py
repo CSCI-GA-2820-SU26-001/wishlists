@@ -129,7 +129,10 @@ class BaseTestCase(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
         data = resp.get_json()
-        self.assertEqual(len(data), 2)
+        self.assertEqual(data["id"], item.id)
+        self.assertEqual(data["wishlist_id"], wishlist.id)
+        self.assertEqual(data["name"], item.name)
+        self.assertEqual(data["quantity"], item.quantity)
 
     def test_list_items(self):
         """It should list all items in a wishlist"""
@@ -164,14 +167,6 @@ class BaseTestCase(TestCase):
         data = resp.get_json()
 
         self.assertEqual(data, [])
-
-        self.assertEqual(data["id"], item.id)
-
-        self.assertEqual(data["wishlist_id"], wishlist.id)
-
-        self.assertEqual(data["name"], item.name)
-
-        self.assertEqual(data["quantity"], item.quantity)
 
     def test_read_item_not_found(self):
         """It should return 404 for missing item"""

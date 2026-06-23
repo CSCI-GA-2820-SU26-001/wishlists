@@ -23,6 +23,7 @@ import os
 import logging
 from unittest import TestCase
 from wsgi import app
+from tests.factories import WishlistFactory, ItemFactory
 from service.common import status
 from service.models import db, Wishlist
 from tests.factories import WishlistFactory
@@ -31,13 +32,15 @@ DATABASE_URI = os.getenv(
     "DATABASE_URI", "postgresql+psycopg://postgres:postgres@localhost:5432/testdb"
 )
 
+BASE_URL = "/wishlists"
+
 
 ######################################################################
 #  T E S T   C A S E S
 ######################################################################
 # pylint: disable=too-many-public-methods
-class TestYourResourceService(TestCase):
-    """REST API Server Tests"""
+class BaseTestCase(TestCase):
+    """Base Test Case Setup"""
 
     @classmethod
     def setUpClass(cls):

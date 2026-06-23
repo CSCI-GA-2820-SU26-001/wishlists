@@ -107,6 +107,39 @@ class BaseTestCase(TestCase):
         )
         self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
 
+   
+    def test_add_item(self):
+        """It should add an Item to a Wishlist"""
+
+        # Create a wishlist first
+        wishlist = WishlistFactory()
+
+        resp = self.client.post(BASE_URL, json=wishlist.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        created_wishlist = resp.get_json()
+
+        # Create item data
+        item = ItemFactory()
+        item_data = item.serialize()
+        item_data["wishlist_id"] = created_wishlist["id"]
+
+        # Add item to wishlist
+        resp = self.client.post(
+            f"/wishlists/{created_wishlist['id']}/items",
+            json=item_data,
+        )
+
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        data = resp.get_json()
+
+        self.assertEqual(data["wishlist_id"], created_wishlist["id"])
+        self.assertEqual(data["name"], item_data["name"])
+        self.assertEqual(data["quantity"], item_data["quantity"])    
+
+
+
         # # Check that the location header was correct by getting it
         # resp = self.client.get(location)
         # self.assertEqual(resp.status_code, status.HTTP_200_OK)

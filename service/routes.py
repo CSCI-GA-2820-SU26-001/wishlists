@@ -74,6 +74,39 @@ def create_accounts():
     return message, status.HTTP_201_CREATED
 
 
+
+######################################################################
+# ADD AN ITEM TO A WISHLIST
+######################################################################
+
+@app.route("/wishlists/<int:wishlist_id>/items", methods=["POST"])
+
+def create_item(wishlist_id):
+    """Add an Item to a Wishlist"""
+
+    app.logger.info("Adding item to wishlist %s", wishlist_id)
+
+    check_content_type("application/json")
+
+    wishlist = Wishlist.find(wishlist_id)
+
+    if not wishlist:
+        abort(status.HTTP_404_NOT_FOUND, "Wishlist not found")
+
+    data = request.get_json()
+
+    data["wishlist_id"] = wishlist_id
+
+    item = Item()
+
+    item.deserialize(data)
+
+    item.create()
+
+    return item.serialize(), status.HTTP_201_CREATED
+
+
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################

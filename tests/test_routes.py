@@ -157,38 +157,46 @@ class BaseTestCase(TestCase):
 
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-   
-    def test_add_item(self):
-        """It should add an Item to a Wishlist"""
+    def test_list_items(self):
+        """It should list all items in a wishlist"""
 
-        # Create a wishlist first
+        # Create a wishlist
         wishlist = WishlistFactory()
+        wishlist.create()
 
-        resp = self.client.post(BASE_URL, json=wishlist.serialize())
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        # Create two items
+        item1 = ItemFactory(wishlist=wishlist)
+        item1.create()
 
-        created_wishlist = resp.get_json()
+        item2 = ItemFactory(wishlist=wishlist)
+        item2.create()
 
-        # Create item data
-        item = ItemFactory()
-        item_data = item.serialize()
-        item_data["wishlist_id"] = created_wishlist["id"]
-
-        # Add item to wishlist
-        resp = self.client.post(
-            f"/wishlists/{created_wishlist['id']}/items",
-            json=item_data,
+        # Call the endpoint
+        resp = self.client.get(
+            f"/wishlists/{wishlist.id}/items"
         )
 
-        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
         data = resp.get_json()
 
-        self.assertEqual(data["wishlist_id"], created_wishlist["id"])
-        self.assertEqual(data["name"], item_data["name"])
-        self.assertEqual(data["quantity"], item_data["quantity"])    
+        self.assertEqual(len(data), 2)
+        
+    def test_list_items_empty(self):
+        """It should return an empty list"""
 
+        wishlist = WishlistFactory()
+        wishlist.create()
 
+        resp = self.client.get(
+            f"/wishlists/{wishlist.id}/items"
+        )
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+
+        self.assertEqual(data, [])
 
         # # Check that the location header was correct by getting it
         # resp = self.client.get(location)

@@ -73,6 +73,31 @@ def create_accounts():
     # return message, status.HTTP_201_CREATED, {"Location": location_url}
     return message, status.HTTP_201_CREATED
 
+######################################################################
+# READ AN ITEM
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/items/<int:item_id>", methods=["GET"])
+def get_item(wishlist_id, item_id):
+    """Read an Item"""
+
+    app.logger.info(
+        "Request to read item %s from wishlist %s",
+        item_id,
+        wishlist_id,
+    )
+
+    wishlist = Wishlist.find(wishlist_id)
+
+    if not wishlist:
+        abort(status.HTTP_404_NOT_FOUND, "Wishlist not found")
+
+    item = Item.find(item_id)
+
+    if not item or item.wishlist_id != wishlist_id:
+        abort(status.HTTP_404_NOT_FOUND, "Item not found")
+
+    return item.serialize(), status.HTTP_200_OK
+
 
 
 ######################################################################

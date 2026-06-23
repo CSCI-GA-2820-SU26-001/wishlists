@@ -53,7 +53,7 @@ def index():
 # CREATE A NEW WISHLIST
 ######################################################################
 @app.route("/wishlists", methods=["POST"])
-def create_accounts():
+def create_wishlists():
     """
     Creates a Wishlist
     This endpoint will create a Wishlist based the data in the body that is posted
@@ -61,7 +61,7 @@ def create_accounts():
     app.logger.info("Creating a wishlist ...")
     check_content_type("application/json")
 
-    # Create the account
+    # Create the wishlist
     wishlist = Wishlist()
     wishlist.deserialize(request.get_json())
     wishlist.create()
@@ -157,7 +157,7 @@ def list_items(wishlist_id):
 # DELETE AN ITEM
 ######################################################################
 @app.route("/wishlists/<int:wishlist_id>/items/<int:item_id>", methods=["DELETE"])
-def delete_addresses(wishlist_id, item_id):
+def delete_items(wishlist_id, item_id):
     """
     Delete an Item
 

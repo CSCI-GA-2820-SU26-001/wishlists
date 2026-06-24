@@ -231,6 +231,20 @@ def delete_items(wishlist_id, item_id):
     return "", status.HTTP_204_NO_CONTENT
 
 ######################################################################
+# DELETE WISHLIST
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>", methods=["DELETE"])
+def delete_wishlist(wishlist_id):
+    """Delete a Wishlist"""
+    app.logger.info("Request to delete Wishlist with id: %s", wishlist_id)
+
+    wishlist = Wishlist.find(wishlist_id)
+    if wishlist:
+        wishlist.delete()
+
+    return "", status.HTTP_204_NO_CONTENT
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 

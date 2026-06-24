@@ -316,3 +316,70 @@ class BaseTestCase(TestCase):
             wishlist.id = new_wishlist["id"]
             wishlists.append(wishlist)
         return wishlists
+    
+    def test_delete_wishlist(self):
+        """It should Delete a Wishlist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        resp = self.client.delete(f"{BASE_URL}/{wishlist.id}")
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        found = Wishlist.find(wishlist.id)
+        self.assertIsNone(found)
+
+    def test_read_item_wishlist_not_found(self):
+        """It should return 404 when reading an item from a missing wishlist"""
+        resp = self.client.get(f"{BASE_URL}/0/items/1")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_add_item_wishlist_not_found(self):
+        """It should return 404 when adding an item to a missing wishlist"""
+        item = ItemFactory()
+        resp = self.client.post(f"{BASE_URL}/0/items", json=item.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_list_items_wishlist_not_found(self):
+        """It should return 404 when listing items from a missing wishlist"""
+        resp = self.client.get(f"{BASE_URL}/0/items")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+
+    def test_update_item_not_found(self):
+        """It should return 404 when updating a missing item"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        item = ItemFactory()
+        data = item.serialize()
+
+        resp = self.client.put(f"{BASE_URL}/{wishlist.id}/items/0", json=data)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_create_wishlist_no_content_type(self):
+        """It should return 415 when creating a wishlist without Content-Type"""
+        resp = self.client.post(BASE_URL, data="{}")
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+
+
+    def test_create_wishlist_wrong_content_type(self):
+        """It should return 415 when creating a wishlist with wrong Content-Type"""
+        resp = self.client.post(
+            BASE_URL,
+            data="{}",
+            content_type="text/plain",
+        )
+        self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+    
+    def test_update_item_wishlist_not_found(self):
+        """It should return 404 when updating an item in a missing wishlist"""
+        item = ItemFactory()
+        resp = self.client.put(f"{BASE_URL}/0/items/1", json=item.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_method_not_allowed(self):
+        """It should return 405 for unsupported method"""
+        resp = self.client.put(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)

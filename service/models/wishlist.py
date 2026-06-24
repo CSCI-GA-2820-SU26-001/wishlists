@@ -52,9 +52,9 @@ class Wishlist(db.Model, PersistentBase):
             # since clients shouldn't set their own ID
             self.name = data["name"]
             self.customer_id = data["customer_id"]
-            self.description = data["description"]
+            self.description = data.get("description")  # nullable
             # handle inner list of addresses
-            item_list = data.get("items")
+            item_list = data.get("items", [])  # can be empty
             for json_item in item_list:
                 item = Item()
                 item.deserialize(json_item)

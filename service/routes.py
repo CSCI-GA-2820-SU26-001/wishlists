@@ -73,6 +73,18 @@ def create_wishlists():
     # return message, status.HTTP_201_CREATED, {"Location": location_url}
     return message, status.HTTP_201_CREATED
 
+######################################################################
+# LIST WISHLISTS
+######################################################################
+@app.route("/wishlists", methods=["GET"])
+def list_wishlists():
+    """Returns all of the Wishlists"""
+    app.logger.info("Request to list Wishlists")
+
+    wishlists = Wishlist.all()
+    results = [wishlist.serialize() for wishlist in wishlists]
+
+    return jsonify(results), status.HTTP_200_OK
 
 ######################################################################
 # READ AN ITEM

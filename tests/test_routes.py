@@ -409,3 +409,14 @@ class BaseTestCase(TestCase):
 
         resp = self.client.put(f"{BASE_URL}/0", json=data)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+    
+    def test_list_wishlists(self):
+        """It should List all Wishlists"""
+        WishlistFactory().create()
+        WishlistFactory().create()
+
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(len(data), 2)

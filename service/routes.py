@@ -42,19 +42,8 @@ def index():
         ),
         status.HTTP_200_OK,
     )
-######################################################################
-# List Wishlists
-######################################################################
 
-@app.route("/wishlists", methods=["GET"])
-def list_wishlists():
-    """Returns all of the Wishlists"""
-    app.logger.info("Request to list Wishlists")
 
-    wishlists = Wishlist.all()
-    results = [wishlist.serialize() for wishlist in wishlists]
-
-    return jsonify(results), status.HTTP_200_OK
 ######################################################################
 #  R E S T   A P I   E N D P O I N T S
 ######################################################################
@@ -64,7 +53,7 @@ def list_wishlists():
 # CREATE A NEW WISHLIST
 ######################################################################
 @app.route("/wishlists", methods=["POST"])
-def create_accounts():
+def create_wishlists():
     """
     Creates a Wishlist
     This endpoint will create a Wishlist based the data in the body that is posted
@@ -72,7 +61,7 @@ def create_accounts():
     app.logger.info("Creating a wishlist ...")
     check_content_type("application/json")
 
-    # Create the account
+    # Create the wishlist
     wishlist = Wishlist()
     wishlist.deserialize(request.get_json())
     wishlist.create()
@@ -83,6 +72,7 @@ def create_accounts():
 
     # return message, status.HTTP_201_CREATED, {"Location": location_url}
     return message, status.HTTP_201_CREATED
+
 
 ######################################################################
 # READ AN ITEM
@@ -110,13 +100,12 @@ def get_item(wishlist_id, item_id):
     return item.serialize(), status.HTTP_200_OK
 
 
-
 ######################################################################
 # ADD AN ITEM TO A WISHLIST
 ######################################################################
 
-@app.route("/wishlists/<int:wishlist_id>/items", methods=["POST"])
 
+@app.route("/wishlists/<int:wishlist_id>/items", methods=["POST"])
 def create_item(wishlist_id):
     """Add an Item to a Wishlist"""
 
@@ -143,7 +132,7 @@ def create_item(wishlist_id):
 
 ######################################################################
 # READ WISHLIST
-#####################################################################
+######################################################################
 @app.route("/wishlists/<int:wishlist_id>", methods=["GET"])
 def get_wishlist(wishlist_id):
     """Returns a single Wishlist"""
@@ -154,6 +143,50 @@ def get_wishlist(wishlist_id):
         abort(status.HTTP_404_NOT_FOUND, f"Wishlist with id '{wishlist_id}' was not found.")
 
     return jsonify(wishlist.serialize()), status.HTTP_200_OK
+
+######################################################################
+# LIST ITEMS IN A WISHLIST
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/items", methods=["GET"])
+def list_items(wishlist_id):
+    """List all items in a wishlist"""
+
+    app.logger.info("Request to list items for wishlist %s", wishlist_id)
+
+    wishlist = Wishlist.find(wishlist_id)
+
+    if not wishlist:
+        abort(status.HTTP_404_NOT_FOUND, "Wishlist not found")
+
+    items = []
+
+    for item in wishlist.items:
+        items.append(item.serialize())
+
+    return items, status.HTTP_200_OK
+
+
+######################################################################
+# DELETE AN ITEM
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>/items/<int:item_id>", methods=["DELETE"])
+def delete_items(wishlist_id, item_id):
+    """
+    Delete an Item
+
+    This endpoint will delete an Item based the id specified in the path
+    """
+    app.logger.info(
+        "Request to delete Item %s for Wishlist id: %s", (item_id, wishlist_id)
+    )
+
+    # See if the item exists and delete it if it does
+    item = Item.find(item_id)
+    if item:
+        item.delete()
+
+    return "", status.HTTP_204_NO_CONTENT
+
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################

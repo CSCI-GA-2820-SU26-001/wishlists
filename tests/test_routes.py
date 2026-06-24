@@ -383,3 +383,29 @@ class BaseTestCase(TestCase):
         """It should return 405 for unsupported method"""
         resp = self.client.put(BASE_URL)
         self.assertEqual(resp.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_update_wishlist(self):
+        """It should Update a Wishlist"""
+        wishlist = WishlistFactory()
+        wishlist.create()
+
+        new_data = wishlist.serialize()
+        new_data["name"] = "Updated Wishlist"
+        new_data["description"] = "Updated description"
+
+        resp = self.client.put(f"{BASE_URL}/{wishlist.id}", json=new_data)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+        self.assertEqual(data["id"], wishlist.id)
+        self.assertEqual(data["name"], "Updated Wishlist")
+        self.assertEqual(data["description"], "Updated description")
+
+
+    def test_update_wishlist_not_found(self):
+        """It should not Update a Wishlist that does not exist"""
+        wishlist = WishlistFactory()
+        data = wishlist.serialize()
+
+        resp = self.client.put(f"{BASE_URL}/0", json=data)
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)

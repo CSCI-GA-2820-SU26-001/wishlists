@@ -245,6 +245,26 @@ def delete_wishlist(wishlist_id):
     return "", status.HTTP_204_NO_CONTENT
 
 ######################################################################
+# UPDATE WISHLIST
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>", methods=["PUT"])
+def update_wishlist(wishlist_id):
+    """Update a Wishlist"""
+    app.logger.info("Request to update Wishlist with id: %s", wishlist_id)
+
+    check_content_type("application/json")
+
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(status.HTTP_404_NOT_FOUND, f"Wishlist with id '{wishlist_id}' was not found.")
+
+    wishlist.deserialize(request.get_json())
+    wishlist.id = wishlist_id
+    wishlist.update()
+
+    return jsonify(wishlist.serialize()), status.HTTP_200_OK
+
+######################################################################
 #  U T I L I T Y   F U N C T I O N S
 ######################################################################
 

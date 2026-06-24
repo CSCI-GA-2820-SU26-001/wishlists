@@ -73,6 +73,18 @@ def create_wishlists():
     # return message, status.HTTP_201_CREATED, {"Location": location_url}
     return message, status.HTTP_201_CREATED
 
+######################################################################
+# LIST WISHLISTS
+######################################################################
+@app.route("/wishlists", methods=["GET"])
+def list_wishlists():
+    """Returns all of the Wishlists"""
+    app.logger.info("Request to list Wishlists")
+
+    wishlists = Wishlist.all()
+    results = [wishlist.serialize() for wishlist in wishlists]
+
+    return jsonify(results), status.HTTP_200_OK
 
 ######################################################################
 # READ AN ITEM
@@ -243,6 +255,26 @@ def delete_wishlist(wishlist_id):
         wishlist.delete()
 
     return "", status.HTTP_204_NO_CONTENT
+
+######################################################################
+# UPDATE WISHLIST
+######################################################################
+@app.route("/wishlists/<int:wishlist_id>", methods=["PUT"])
+def update_wishlist(wishlist_id):
+    """Update a Wishlist"""
+    app.logger.info("Request to update Wishlist with id: %s", wishlist_id)
+
+    check_content_type("application/json")
+
+    wishlist = Wishlist.find(wishlist_id)
+    if not wishlist:
+        abort(status.HTTP_404_NOT_FOUND, f"Wishlist with id '{wishlist_id}' was not found.")
+
+    wishlist.deserialize(request.get_json())
+    wishlist.id = wishlist_id
+    wishlist.update()
+
+    return jsonify(wishlist.serialize()), status.HTTP_200_OK
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S

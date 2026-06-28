@@ -73,6 +73,7 @@ def create_wishlists():
     # return message, status.HTTP_201_CREATED, {"Location": location_url}
     return message, status.HTTP_201_CREATED
 
+
 ######################################################################
 # LIST WISHLISTS
 ######################################################################
@@ -85,6 +86,7 @@ def list_wishlists():
     results = [wishlist.serialize() for wishlist in wishlists]
 
     return jsonify(results), status.HTTP_200_OK
+
 
 ######################################################################
 # READ AN ITEM
@@ -142,6 +144,7 @@ def create_item(wishlist_id):
 
     return item.serialize(), status.HTTP_201_CREATED
 
+
 ######################################################################
 # READ WISHLIST
 ######################################################################
@@ -152,9 +155,13 @@ def get_wishlist(wishlist_id):
 
     wishlist = Wishlist.find(wishlist_id)
     if not wishlist:
-        abort(status.HTTP_404_NOT_FOUND, f"Wishlist with id '{wishlist_id}' was not found.")
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' was not found.",
+        )
 
     return jsonify(wishlist.serialize()), status.HTTP_200_OK
+
 
 ######################################################################
 # LIST ITEMS IN A WISHLIST
@@ -176,9 +183,6 @@ def list_items(wishlist_id):
         items.append(item.serialize())
 
     return items, status.HTTP_200_OK
-
-
-
 
 
 ######################################################################
@@ -215,12 +219,6 @@ def update_item(wishlist_id, item_id):
     return item.serialize(), status.HTTP_200_OK
 
 
-
-
-
-
-
-
 ######################################################################
 # DELETE AN ITEM
 ######################################################################
@@ -242,6 +240,7 @@ def delete_items(wishlist_id, item_id):
 
     return "", status.HTTP_204_NO_CONTENT
 
+
 ######################################################################
 # DELETE WISHLIST
 ######################################################################
@@ -256,6 +255,7 @@ def delete_wishlist(wishlist_id):
 
     return "", status.HTTP_204_NO_CONTENT
 
+
 ######################################################################
 # UPDATE WISHLIST
 ######################################################################
@@ -268,13 +268,17 @@ def update_wishlist(wishlist_id):
 
     wishlist = Wishlist.find(wishlist_id)
     if not wishlist:
-        abort(status.HTTP_404_NOT_FOUND, f"Wishlist with id '{wishlist_id}' was not found.")
+        abort(
+            status.HTTP_404_NOT_FOUND,
+            f"Wishlist with id '{wishlist_id}' was not found.",
+        )
 
     wishlist.deserialize(request.get_json())
     wishlist.id = wishlist_id
     wishlist.update()
 
     return jsonify(wishlist.serialize()), status.HTTP_200_OK
+
 
 ######################################################################
 #  U T I L I T Y   F U N C T I O N S

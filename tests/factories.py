@@ -11,6 +11,8 @@ class WishlistFactory(Factory):
     """Creates fake Wishlists"""
 
     class Meta:
+        """Factory metadata: binds to the Wishlist model."""
+
         model = Wishlist
 
     id = Sequence(lambda n: n)
@@ -34,6 +36,8 @@ class ItemFactory(Factory):
     """Creates fake Items"""
 
     class Meta:
+        """Factory metadata: binds to the Item model."""
+
         model = Item
 
     id = Sequence(lambda n: n)

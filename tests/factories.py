@@ -8,11 +8,11 @@ from service.models import Wishlist, Item
 
 
 class WishlistFactory(Factory):
+    # pylint: disable=too-few-public-methods
     """Creates fake Wishlists"""
 
     class Meta:
-        """Factory metadata: binds to the Wishlist model."""
-
+        # pylint: disable=missing-class-docstring
         model = Wishlist
 
     id = Sequence(lambda n: n)
@@ -33,11 +33,11 @@ class WishlistFactory(Factory):
 
 
 class ItemFactory(Factory):
+    # pylint: disable=too-few-public-methods
     """Creates fake Items"""
 
     class Meta:
-        """Factory metadata: binds to the Item model."""
-
+        # pylint: disable=missing-class-docstring
         model = Item
 
     id = Sequence(lambda n: n)

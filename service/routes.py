@@ -21,7 +21,7 @@ This service implements a REST API that allows you to Create, Read, Update
 and Delete Wishlist
 """
 
-from flask import jsonify, request, abort
+from flask import jsonify, request, abort, url_for
 from flask import current_app as app  # Import Flask application
 from service.models import Wishlist, Item
 from service.common import status  # HTTP Status Codes
@@ -68,10 +68,9 @@ def create_wishlists():
 
     # Create a message to return
     message = wishlist.serialize()
-    # location_url = url_for("get_wishlists", wishlist_id=wishlist.id, _external=True)
+    location_url = url_for("get_wishlist", wishlist_id=wishlist.id, _external=True)
 
-    # return message, status.HTTP_201_CREATED, {"Location": location_url}
-    return message, status.HTTP_201_CREATED
+    return message, status.HTTP_201_CREATED, {"Location": location_url}
 
 
 ######################################################################
@@ -124,7 +123,6 @@ def create_item(wishlist_id):
     """Add an Item to a Wishlist"""
 
     app.logger.info("Adding item to wishlist %s", wishlist_id)
-
     check_content_type("application/json")
 
     wishlist = Wishlist.find(wishlist_id)
@@ -133,16 +131,20 @@ def create_item(wishlist_id):
         abort(status.HTTP_404_NOT_FOUND, "Wishlist not found")
 
     data = request.get_json()
-
     data["wishlist_id"] = wishlist_id
 
+    # Create the item
     item = Item()
-
     item.deserialize(data)
-
     item.create()
 
-    return item.serialize(), status.HTTP_201_CREATED
+    # Create a message to return
+    message = item.serialize()
+    location_url = url_for(
+        "get_item", wishlist_id=wishlist.id, item_id=item.id, _external=True
+    )
+
+    return message, status.HTTP_201_CREATED, {"Location": location_url}
 
 
 ######################################################################

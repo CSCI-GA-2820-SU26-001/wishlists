@@ -166,15 +166,14 @@ class BaseTestCase(TestCase):
         self.assertEqual(data["id"], wishlist.id)
         self.assertEqual(data["name"], wishlist.name)
         self.assertEqual(data["customer_id"], wishlist.customer_id)
-    
+
     def test_get_wishlist_not_found(self):
         """It should not Read a Wishlist that does not exist"""
         resp = self.client.get("/wishlists/0")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     # more cases will be added in the future
-    
-    
+
     def test_list_items_empty(self):
         """It should return an empty list"""
 
@@ -248,11 +247,8 @@ class BaseTestCase(TestCase):
         # )
         # self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
 
-
-
     def test_update_item(self):
-        
-
+        """It should Update an Item"""
         wishlist = WishlistFactory()
         wishlist.create()
 
@@ -276,7 +272,6 @@ class BaseTestCase(TestCase):
         self.assertEqual(data["wishlist_id"], wishlist.id)
         self.assertEqual(data["name"], "Updated Item")
         self.assertEqual(data["quantity"], 99)
-
 
     def test_delete_item(self):
         """It should Delete an Item"""
@@ -316,7 +311,7 @@ class BaseTestCase(TestCase):
             wishlist.id = new_wishlist["id"]
             wishlists.append(wishlist)
         return wishlists
-    
+
     def test_delete_wishlist(self):
         """It should Delete a Wishlist"""
         wishlist = WishlistFactory()
@@ -333,19 +328,16 @@ class BaseTestCase(TestCase):
         resp = self.client.get(f"{BASE_URL}/0/items/1")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-
     def test_add_item_wishlist_not_found(self):
         """It should return 404 when adding an item to a missing wishlist"""
         item = ItemFactory()
         resp = self.client.post(f"{BASE_URL}/0/items", json=item.serialize())
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
-
     def test_list_items_wishlist_not_found(self):
         """It should return 404 when listing items from a missing wishlist"""
         resp = self.client.get(f"{BASE_URL}/0/items")
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-
 
     def test_update_item_not_found(self):
         """It should return 404 when updating a missing item"""
@@ -363,7 +355,6 @@ class BaseTestCase(TestCase):
         resp = self.client.post(BASE_URL, data="{}")
         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
-
     def test_create_wishlist_wrong_content_type(self):
         """It should return 415 when creating a wishlist with wrong Content-Type"""
         resp = self.client.post(
@@ -372,7 +363,7 @@ class BaseTestCase(TestCase):
             content_type="text/plain",
         )
         self.assertEqual(resp.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
-    
+
     def test_update_item_wishlist_not_found(self):
         """It should return 404 when updating an item in a missing wishlist"""
         item = ItemFactory()
@@ -401,7 +392,6 @@ class BaseTestCase(TestCase):
         self.assertEqual(data["name"], "Updated Wishlist")
         self.assertEqual(data["description"], "Updated description")
 
-
     def test_update_wishlist_not_found(self):
         """It should not Update a Wishlist that does not exist"""
         wishlist = WishlistFactory()
@@ -409,7 +399,7 @@ class BaseTestCase(TestCase):
 
         resp = self.client.put(f"{BASE_URL}/0", json=data)
         self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
-    
+
     def test_list_wishlists(self):
         """It should List all Wishlists"""
         WishlistFactory().create()

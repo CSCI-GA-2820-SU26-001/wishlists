@@ -3,15 +3,13 @@ on:
   push:
     branches:
       - master
-      - add-codecov
-    # paths-ignore:
-    #   - 'README.md'
+    paths-ignore:
+      - 'README.md'
   pull_request:
     branches:
       - master
-      - add-codecov
-    # paths-ignore:
-    #   - 'README.md'
+    paths-ignore:
+      - 'README.md'
 
 permissions:
   contents: read

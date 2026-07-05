@@ -1,6 +1,6 @@
 # These can be overidden with env vars.
 REGISTRY ?= cluster-registry:5000
-IMAGE_NAME ?= petshop
+IMAGE_NAME ?= wishlist
 IMAGE_TAG ?= 1.0
 IMAGE ?= $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
 PLATFORM ?= "linux/amd64,linux/arm64"
@@ -72,7 +72,8 @@ import: ## Import the image into the local K3D cluster
 deploy: ## Deploy the service on local Kubernetes
 	$(info Deploying service locally...)
 	kubectl apply -R -f k8s/
-
+	kubectl rollout status deployment/wishlist
+	
 ############################################################
 # COMMANDS FOR BUILDING THE IMAGE
 ############################################################

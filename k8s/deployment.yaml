@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: wishlist
+  labels:
+    app: wishlist
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: wishlist
+  template:
+    metadata:
+      labels:
+        app: wishlist
+    spec:
+      containers:
+        - name: wishlist
+          image: cluster-registry:5000/wishlist:1.0
+          imagePullPolicy: IfNotPresent
+          command: ["python"]
+          args: ["-m", "flask", "run", "--host=0.0.0.0", "--port=8080"]
+          ports:
+            - containerPort: 8080
+          env:
+            - name: FLASK_APP
+              value: "wsgi:app"
+            - name: PORT
+              value: "8080"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20

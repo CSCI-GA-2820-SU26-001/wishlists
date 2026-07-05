@@ -410,3 +410,9 @@ class BaseTestCase(TestCase):
 
         data = resp.get_json()
         self.assertEqual(len(data), 2)
+
+    def test_health(self):
+        """It should return health status"""
+        resp = self.client.get("/health")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.get_json()["status"], "OK")

@@ -52,6 +52,11 @@ def index():
 ######################################################################
 # CREATE A NEW WISHLIST
 ######################################################################
+@app.route("/health")
+def health():
+    """Health Status"""
+    return jsonify(status="OK"), status.HTTP_200_OK
+
 @app.route("/wishlists", methods=["POST"])
 def create_wishlists():
     """
@@ -239,6 +244,8 @@ def delete_items(wishlist_id, item_id):
     item = Item.find(item_id)
     if item:
         item.delete()
+    
+    
 
     return "", status.HTTP_204_NO_CONTENT
 

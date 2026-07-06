@@ -107,6 +107,36 @@ class BaseTestCase(TestCase):
         )
         self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
 
+
+
+    def test_list_wishlists_by_customer_id(self):
+        """It should List Wishlists by customer_id"""
+        customer_id = 123
+
+        wishlist1 = WishlistFactory(customer_id=customer_id)
+        wishlist1.create()
+
+        wishlist2 = WishlistFactory(customer_id=customer_id)
+        wishlist2.create()
+
+        wishlist3 = WishlistFactory(customer_id=456)
+        wishlist3.create()
+
+        resp = self.client.get(f"{BASE_URL}?customer_id={customer_id}")
+
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+        data = resp.get_json()
+
+        self.assertEqual(len(data), 2)
+
+        for wishlist in data:
+            self.assertEqual(wishlist["customer_id"], customer_id)
+
+    
+
+
+
     def test_read_item(self):
         """It should read an Item"""
 

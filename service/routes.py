@@ -82,12 +82,22 @@ def create_wishlists():
 ######################################################################
 # LIST WISHLISTS
 ######################################################################
+
+
+
 @app.route("/wishlists", methods=["GET"])
 def list_wishlists():
     """Returns all of the Wishlists"""
     app.logger.info("Request to list Wishlists")
 
-    wishlists = Wishlist.all()
+    customer_id = request.args.get("customer_id", type=int)
+
+    if customer_id is not None:
+        app.logger.info("Filtering Wishlists by customer_id: %s", customer_id)
+        wishlists = Wishlist.find_by_customer_id(customer_id)
+    else:
+        wishlists = Wishlist.all()
+
     results = [wishlist.serialize() for wishlist in wishlists]
 
     return jsonify(results), status.HTTP_200_OK

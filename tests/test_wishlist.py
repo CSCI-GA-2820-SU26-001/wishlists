@@ -165,8 +165,6 @@ class TestWishlistModel(TestCase):
         self.assertEqual(same_wishlist.id, wishlist.id)
         self.assertEqual(same_wishlist.name, wishlist.name)
 
-
-
     def test_find_by_customer_id(self):
         """It should Find Wishlists by customer_id"""
         customer_id = 123
@@ -183,9 +181,6 @@ class TestWishlistModel(TestCase):
 
         for wishlist in wishlists:
             self.assertEqual(wishlist.customer_id, customer_id)
-
-
-
 
     def test_serialize_a_wishlist(self):
         """It should Serialize a wishlist"""

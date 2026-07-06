@@ -107,8 +107,6 @@ class BaseTestCase(TestCase):
         )
         self.assertEqual(new_wishlist["items"], wishlist.items, "Items does not match")
 
-
-
     def test_list_wishlists_by_customer_id(self):
         """It should List Wishlists by customer_id"""
         customer_id = 123
@@ -132,10 +130,6 @@ class BaseTestCase(TestCase):
 
         for wishlist in data:
             self.assertEqual(wishlist["customer_id"], customer_id)
-
-    
-
-
 
     def test_read_item(self):
         """It should read an Item"""

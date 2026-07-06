@@ -82,9 +82,6 @@ def create_wishlists():
 ######################################################################
 # LIST WISHLISTS
 ######################################################################
-
-
-
 @app.route("/wishlists", methods=["GET"])
 def list_wishlists():
     """Returns all of the Wishlists"""

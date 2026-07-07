@@ -106,7 +106,7 @@ Enter the application container:
 ```bash
 docker exec -it nyu-project bash
 ```
-
+The service will start using the configuration provided in the project environment files.
 ## Running Tests
 
 Run all tests:
@@ -138,6 +138,36 @@ honcho start
 ```
 
 The service will start using the configuration provided in the project environment files.
+
+## Kubernetes Deployment
+
+Kubernetes deployment manifests are located in the `k8s/` directory.
+
+To deploy the application locally, run:
+
+```bash
+make cluster
+make build
+make push
+make deploy
+```
+
+These commands create a local Kubernetes cluster, build the Docker image, push the image, and deploy the service.
+
+## Continuous Integration
+
+This project uses GitHub Actions for Continuous Integration.
+
+Every push and pull request automatically runs:
+
+- Unit tests
+- Flake8 lint checks
+- Pylint code quality checks
+- Code coverage upload to Codecov.
+
+## API Testing
+
+The REST API can be tested using the REST Client extension in Visual Studio Code or any HTTP client such as curl or Postman.
 
 ## License
 

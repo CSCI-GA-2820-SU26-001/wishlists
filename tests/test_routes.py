@@ -440,3 +440,81 @@ class BaseTestCase(TestCase):
         resp = self.client.get("/health")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.get_json()["status"], "OK")
+
+    def test_clear_items(self):
+        """It should clear all items from a wishlist"""
+
+        # Create a wishlist
+        wishlist = WishlistFactory()
+
+        response = self.client.post(
+            BASE_URL,
+            json=wishlist.serialize(),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        new_wishlist = response.get_json()
+
+        # Add one item
+        item = {
+            "name": "Coffee Maker",
+            "quantity": 1,
+        }
+
+        response = self.client.post(
+            f"{BASE_URL}/{new_wishlist['id']}/items",
+            json=item,
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        # Clear all items
+        response = self.client.post(
+            f"{BASE_URL}/{new_wishlist['id']}/clear"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify wishlist is empty
+        response = self.client.get(
+            f"{BASE_URL}/{new_wishlist['id']}/items"
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.get_json()), 0)
+
+    def test_clear_items_not_found(self):
+        """It should return 404 when clearing a missing wishlist"""
+
+        response = self.client.post(
+            f"{BASE_URL}/99999/clear"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_clear_empty_wishlist(self):
+        """It should clear an empty wishlist"""
+
+        wishlist = WishlistFactory()
+
+        response = self.client.post(
+            BASE_URL,
+            json=wishlist.serialize(),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        new_wishlist = response.get_json()
+
+        response = self.client.post(
+            f"{BASE_URL}/{new_wishlist['id']}/clear"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        response = self.client.get(
+            f"{BASE_URL}/{new_wishlist['id']}/items"
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.get_json(), [])

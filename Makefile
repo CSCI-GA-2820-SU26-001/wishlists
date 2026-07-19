@@ -41,6 +41,12 @@ test: ## Run the unit tests
 	$(info Running tests...)
 	export RETRY_COUNT=1; pytest --pspec --cov=service --cov-fail-under=95 --disable-warnings
 
+
+.PHONY: bdd
+bdd: ## Run the BDD tests
+	$(info Running BDD tests...)
+	pipenv run behave
+
 .PHONY: run
 run: ## Run the service
 	$(info Starting service...)

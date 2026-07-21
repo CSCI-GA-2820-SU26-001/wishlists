@@ -40,6 +40,37 @@ def step_impl(context):
     context.wishlist = response.json()
     context.wishlist_id = context.wishlist["id"]
 
+@given("multiple wishlists exist")
+def step_impl(context):
+    wishlists = [
+        {
+            "customer_id": 1001,
+            "name": "Wishlist One",
+            "description": "First wishlist",
+            "items": [],
+        },
+        {
+            "customer_id": 1001,
+            "name": "Wishlist Two",
+            "description": "Second wishlist",
+            "items": [],
+        },
+        {
+            "customer_id": 2001,
+            "name": "Wishlist Three",
+            "description": "Third wishlist",
+            "items": [],
+        },
+    ]
+
+    for wishlist in wishlists:
+        response = requests.post(
+            f"{context.base_url}/wishlists",
+            json=wishlist,
+            timeout=5,
+        )
+        assert response.status_code == 201
+
 @when(
     'I create a wishlist with customer id "{customer_id}", '
     'name "{name}", and description "{description}"'
@@ -78,6 +109,14 @@ def step_impl(context, customer_id, name, description):
         timeout=5,
     )
 
+@when('I query wishlists with customer id "{customer_id}"')
+def step_impl(context, customer_id):
+    context.response = requests.get(
+        f"{context.base_url}/wishlists",
+        params={"customer_id": customer_id},
+        timeout=5,
+    )
+
 @then("the response status code should be {status_code:d}")
 def step_impl(context, status_code):
     """Check the response status code"""
@@ -104,6 +143,14 @@ def step_impl(context, description):
     data = context.response.json()
     assert data["description"] == description
 
+@then('only wishlists for customer id "{customer_id}" are returned')
+def step_impl(context, customer_id):
+    wishlists = context.response.json()
+
+    assert len(wishlists) > 0
+
+    for wishlist in wishlists:
+        assert str(wishlist["customer_id"]) == customer_id
 
 @given(
     'a wishlist exists with customer id "{customer_id}", '

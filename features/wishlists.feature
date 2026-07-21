@@ -1,7 +1,12 @@
-Feature: Wishlist BDD testing environment
-    As a developer
-    I need a working BDD test environment
-    So that future UI scenarios can be added for the wishlist service
+Feature: Wishlist Management
+    As a customer
+    I need to create wishlists
+    So that I can save items I want to buy later
 
-    Scenario: Verify BDD environment is configured
-        Given the Wishlist BDD test environment is configured
+    Scenario: Create a new wishlist
+        Given the wishlist service is running
+        When I create a wishlist with customer id "1001", name "Birthday Wishlist", and description "Birthday gift ideas"
+        Then the response status code should be 201
+        And the response should contain customer id "1001"
+        And the response should contain name "Birthday Wishlist"
+        And the response should contain description "Birthday gift ideas"

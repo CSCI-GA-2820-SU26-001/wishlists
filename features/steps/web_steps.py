@@ -65,3 +65,54 @@ def step_impl(context, description):
     """Check the wishlist description in the response"""
     data = context.response.json()
     assert data["description"] == description
+
+@given(
+    'a wishlist exists with customer id "{customer_id}", '
+    'name "{name}", and description "{description}"'
+)
+def step_impl(context, customer_id, name, description):
+    """Create a wishlist fixture for delete tests"""
+    payload = {
+        "customer_id": int(customer_id),
+        "name": name,
+        "description": description,
+        "items": [],
+    }
+
+    response = requests.post(
+        f"{context.base_url}/wishlists",
+        json=payload,
+        timeout=5,
+    )
+
+    assert response.status_code == 201, (
+        f"Expected 201 when creating test wishlist, "
+        f"got {response.status_code}: {response.text}"
+    )
+
+    data = response.json()
+    context.wishlist_id = data["id"]
+    context.response = response
+
+
+@when("I delete the wishlist")
+def step_impl(context):
+    """Delete the wishlist through the REST API"""
+    context.response = requests.delete(
+        f"{context.base_url}/wishlists/{context.wishlist_id}",
+        timeout=5,
+    )
+
+
+@then("the wishlist should no longer be available")
+def step_impl(context):
+    """Verify that the deleted wishlist returns 404"""
+    response = requests.get(
+        f"{context.base_url}/wishlists/{context.wishlist_id}",
+        timeout=5,
+    )
+
+    assert response.status_code == 404, (
+        f"Expected deleted wishlist to return 404, "
+        f"got {response.status_code}: {response.text}"
+    )

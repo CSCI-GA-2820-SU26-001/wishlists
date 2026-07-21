@@ -1,7 +1,7 @@
 Feature: Wishlist Management
     As a customer
-    I need to create wishlists
-    So that I can save items I want to buy later
+    I need to manage wishlists
+    So that I can save and remove items I want to buy later
 
     Scenario: Create a new wishlist
         Given the wishlist service is running
@@ -10,3 +10,10 @@ Feature: Wishlist Management
         And the response should contain customer id "1001"
         And the response should contain name "Birthday Wishlist"
         And the response should contain description "Birthday gift ideas"
+
+    Scenario: Delete an existing wishlist
+        Given the wishlist service is running
+        And a wishlist exists with customer id "1002", name "Delete Me", and description "Temporary wishlist"
+        When I delete the wishlist
+        Then the response status code should be 204
+        And the wishlist should no longer be available

@@ -74,11 +74,7 @@ class BaseTestCase(TestCase):
         """It should call the home page"""
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        data = resp.get_json()
-        self.assertIsNotNone(data)
-        self.assertEqual(data["name"], "Wishlists Service")
-        self.assertEqual(data["version"], "1.0.0")
-        self.assertEqual(data["list_url"], "/wishlists")
+        self.assertIn(b"Wishlists Demo REST API Service", resp.data)
 
     def test_create_wishlist(self):
         """It should Create a new Wishlist"""
@@ -470,24 +466,18 @@ class BaseTestCase(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Clear all items
-        response = self.client.post(
-            f"{BASE_URL}/{new_wishlist['id']}/clear"
-        )
+        response = self.client.post(f"{BASE_URL}/{new_wishlist['id']}/clear")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Verify wishlist is empty
-        response = self.client.get(
-            f"{BASE_URL}/{new_wishlist['id']}/items"
-        )
+        response = self.client.get(f"{BASE_URL}/{new_wishlist['id']}/items")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.get_json()), 0)
 
     def test_clear_items_not_found(self):
         """It should return 404 when clearing a missing wishlist"""
 
-        response = self.client.post(
-            f"{BASE_URL}/99999/clear"
-        )
+        response = self.client.post(f"{BASE_URL}/99999/clear")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -506,15 +496,11 @@ class BaseTestCase(TestCase):
 
         new_wishlist = response.get_json()
 
-        response = self.client.post(
-            f"{BASE_URL}/{new_wishlist['id']}/clear"
-        )
+        response = self.client.post(f"{BASE_URL}/{new_wishlist['id']}/clear")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        response = self.client.get(
-            f"{BASE_URL}/{new_wishlist['id']}/items"
-        )
+        response = self.client.get(f"{BASE_URL}/{new_wishlist['id']}/items")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.get_json(), [])

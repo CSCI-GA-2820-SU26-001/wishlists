@@ -45,3 +45,9 @@ Feature: Wishlist Management
         And the response list should contain wishlist named "List Wishlist One"
         And the response list should contain wishlist named "List Wishlist Two"
 
+    Scenario: Query wishlists by customer id
+        Given the wishlist service is running
+        Given multiple wishlists exist
+        When I query wishlists with customer id "1001"
+        Then the response status code should be 200
+        And only wishlists for customer id "1001" are returned

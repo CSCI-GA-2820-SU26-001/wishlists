@@ -19,6 +19,26 @@ def step_impl(context):
     assert response.status_code == 200
     assert response.json()["status"] == "OK"
 
+@given("a wishlist exists")
+def step_impl(context):
+    """Create a wishlist for update testing"""
+    payload = {
+        "customer_id": 1001,
+        "name": "Original Wishlist",
+        "description": "Original description",
+        "items": [],
+    }
+
+    response = requests.post(
+        f"{context.base_url}/wishlists",
+        json=payload,
+        timeout=5,
+    )
+
+    assert response.status_code == 201
+
+    context.wishlist = response.json()
+    context.wishlist_id = context.wishlist["id"]
 
 @when(
     'I create a wishlist with customer id "{customer_id}", '
@@ -39,6 +59,24 @@ def step_impl(context, customer_id, name, description):
         timeout=5,
     )
 
+@when(
+    'I update the wishlist with customer id "{customer_id}", '
+    'name "{name}", and description "{description}"'
+)
+def step_impl(context, customer_id, name, description):
+    """Update an existing wishlist"""
+    payload = {
+        "customer_id": int(customer_id),
+        "name": name,
+        "description": description,
+        "items": [],
+    }
+
+    context.response = requests.put(
+        f"{context.base_url}/wishlists/{context.wishlist_id}",
+        json=payload,
+        timeout=5,
+    )
 
 @then("the response status code should be {status_code:d}")
 def step_impl(context, status_code):

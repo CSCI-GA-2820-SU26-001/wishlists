@@ -11,9 +11,19 @@ Feature: Wishlist Management
         And the response should contain name "Birthday Wishlist"
         And the response should contain description "Birthday gift ideas"
 
+    Scenario: Update an existing wishlist
+        Given the wishlist service is running
+        Given a wishlist exists
+        When I update the wishlist with customer id "1002", name "Updated Wishlist", and description "Updated description"
+        Then the response status code should be 200
+        And the response should contain customer id "1002"
+        And the response should contain name "Updated Wishlist"
+        And the response should contain description "Updated description"
+
     Scenario: Delete an existing wishlist
         Given the wishlist service is running
         And a wishlist exists with customer id "1002", name "Delete Me", and description "Temporary wishlist"
         When I delete the wishlist
         Then the response status code should be 204
         And the wishlist should no longer be available
+

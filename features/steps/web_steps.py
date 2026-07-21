@@ -104,6 +104,7 @@ def step_impl(context, description):
     data = context.response.json()
     assert data["description"] == description
 
+
 @given(
     'a wishlist exists with customer id "{customer_id}", '
     'name "{name}", and description "{description}"'
@@ -153,4 +154,33 @@ def step_impl(context):
     assert response.status_code == 404, (
         f"Expected deleted wishlist to return 404, "
         f"got {response.status_code}: {response.text}"
+    )
+
+
+@when("I request the wishlist")
+def step_impl(context):
+    """Read the wishlist through the REST API"""
+    context.response = requests.get(
+        f"{context.base_url}/wishlists/{context.wishlist_id}",
+        timeout=5,
+    )
+
+
+@when("I request all wishlists")
+def step_impl(context):
+    """List all wishlists through the REST API"""
+    context.response = requests.get(
+        f"{context.base_url}/wishlists",
+        timeout=5,
+    )
+
+
+@then('the response list should contain wishlist named "{name}"')
+def step_impl(context, name):
+    """Check that the wishlist list contains a wishlist by name"""
+    data = context.response.json()
+    names = [wishlist["name"] for wishlist in data]
+
+    assert name in names, (
+        f"Expected wishlist named '{name}' in response list, got {data}"
     )

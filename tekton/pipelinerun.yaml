@@ -1,0 +1,30 @@
+apiVersion: tekton.dev/v1
+kind: PipelineRun
+metadata:
+  generateName: wishlist-cd-
+spec:
+  timeouts:
+    pipeline: "3h0m0s"
+  pipelineRef:
+    name: wishlist-cd
+  taskRunTemplate:
+    serviceAccountName: wishlist-pipeline
+  params:
+    - name: repo-url
+      value: https://github.com/CSCI-GA-2820-SU26-001/wishlists.git
+    - name: revision
+      value: master
+    - name: image
+      value: 172.19.0.5:5000/wishlist:latest
+    - name: deploy-namespace
+      value: default
+    - name: insecure-registry
+      value: "true"
+  workspaces:
+    - name: source
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 1Gi

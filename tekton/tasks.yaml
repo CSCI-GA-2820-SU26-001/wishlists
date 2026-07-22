@@ -1,0 +1,127 @@
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: wishlist-clone
+spec:
+  description: Clone the requested revision into the shared source workspace.
+  params:
+    - name: repo-url
+      type: string
+    - name: revision
+      type: string
+      default: master
+  workspaces:
+    - name: source
+  steps:
+    - name: clone
+      image: alpine/git:v2.45.2
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: REPO_URL
+          value: $(params.repo-url)
+        - name: REVISION
+          value: $(params.revision)
+      script: |
+        #!/bin/sh
+        set -eu
+        test -z "$(ls -A .)" || { echo "source workspace must be empty"; exit 1; }
+        git init
+        git remote add origin "$REPO_URL"
+        git fetch --depth 1 origin "$REVISION"
+        git checkout --detach FETCH_HEAD
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: wishlist-test
+spec:
+  description: Install development dependencies and run the unit test suite.
+  workspaces:
+    - name: source
+  steps:
+    - name: unit-tests
+      image: quay.io/rofrano/nyu-devops-base:sp26
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: RETRY_COUNT
+          value: "1"
+        - name: DATABASE_URI
+          value: postgresql+psycopg://postgres:postgres@postgres:5432/wishlists
+      script: |
+        #!/bin/bash
+        set -euo pipefail
+        python -m pip install --disable-pip-version-check pipenv
+        pipenv sync --system --dev
+        python -m pytest --pspec --cov=service --cov-fail-under=95 --disable-warnings
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: wishlist-build
+spec:
+  description: Build and push the application image with Kaniko inside Kubernetes.
+  params:
+    - name: image
+      type: string
+    - name: insecure-registry
+      type: string
+      default: "false"
+  workspaces:
+    - name: source
+  steps:
+    - name: build-and-push
+      image: gcr.io/kaniko-project/executor:v1.23.2-debug
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: TARGET_IMAGE
+          value: $(params.image)
+        - name: INSECURE_REGISTRY
+          value: $(params.insecure-registry)
+      script: |
+        #!/busybox/sh
+        set -eu
+        registry_flags=""
+        if [ "$INSECURE_REGISTRY" = "true" ]; then
+          registry_flags="--insecure --skip-tls-verify"
+        fi
+        /kaniko/executor \
+          --context "$(workspaces.source.path)" \
+          --dockerfile "$(workspaces.source.path)/Dockerfile" \
+          --destination "$TARGET_IMAGE" \
+          --snapshot-mode=redo \
+          $registry_flags
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: wishlist-deploy
+spec:
+  description: Apply Kubernetes manifests, deploy the built image, and verify rollout.
+  params:
+    - name: image
+      type: string
+    - name: namespace
+      type: string
+      default: default
+  workspaces:
+    - name: source
+  steps:
+    - name: deploy
+      image: quay.io/openshift/origin-cli:4.16
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: TARGET_IMAGE
+          value: $(params.image)
+        - name: DEPLOY_NAMESPACE
+          value: $(params.namespace)
+      script: |
+        #!/bin/sh
+        set -eu
+        kubectl apply -n "$DEPLOY_NAMESPACE" -R -f k8s/
+        kubectl set image -n "$DEPLOY_NAMESPACE" \
+          deployment/wishlist wishlist="$TARGET_IMAGE"
+        kubectl rollout status -n "$DEPLOY_NAMESPACE" \
+          deployment/wishlist --timeout=180s

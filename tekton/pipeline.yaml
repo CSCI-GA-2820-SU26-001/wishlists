@@ -1,0 +1,68 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: wishlist-cd
+spec:
+  description: Clone, test, build, and deploy the Wishlist service.
+  params:
+    - name: repo-url
+      type: string
+    - name: revision
+      type: string
+      default: master
+    - name: image
+      type: string
+    - name: deploy-namespace
+      type: string
+      default: default
+    - name: insecure-registry
+      type: string
+      default: "false"
+  workspaces:
+    - name: source
+  tasks:
+    - name: clone
+      taskRef:
+        name: wishlist-clone
+      params:
+        - name: repo-url
+          value: $(params.repo-url)
+        - name: revision
+          value: $(params.revision)
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: test
+      runAfter: [clone]
+      taskRef:
+        name: wishlist-test
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: build
+      runAfter: [test]
+      taskRef:
+        name: wishlist-build
+      params:
+        - name: image
+          value: $(params.image)
+        - name: insecure-registry
+          value: $(params.insecure-registry)
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: deploy
+      runAfter: [build]
+      taskRef:
+        name: wishlist-deploy
+      params:
+        - name: image
+          value: $(params.image)
+        - name: namespace
+          value: $(params.deploy-namespace)
+      workspaces:
+        - name: source
+          workspace: source

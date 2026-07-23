@@ -71,6 +71,10 @@ class Wishlist(db.Model, PersistentBase):
                 + str(error)
             ) from error
 
+    ######################################################################
+    #  S T A T I C   D A T A B S E   M E T H O D S
+    ######################################################################
+
     @classmethod
     def find_by_name(cls, name):
         """
@@ -92,3 +96,9 @@ class Wishlist(db.Model, PersistentBase):
         """
         logger.info("Processing customer_id query for %s ...", customer_id)
         return cls.query.filter(cls.customer_id == customer_id)
+
+    @classmethod
+    def remove_all(cls):
+        """Removes all wishlists from the database (use for testing)"""
+        for wishlist in cls.query.all():  # pylint: disable=(not-an-iterable
+            wishlist.delete()

@@ -60,3 +60,23 @@ class Item(db.Model, PersistentBase):
             raise DataValidationError(
                 "Invalid Item: body of request contained bad or no data " + str(error)
             ) from error
+
+    @classmethod
+    def find_by_wishlist_and_name(cls, wishlist_id, name):
+        """
+        Returns all Items in a given Wishlist with the given name
+
+        Args:
+            wishlist_id (int): the wishlist to search within
+            name (string): the name of the Item you want to match
+        """
+        logger.info("Processing name query for %s in wishlist %s...", name, wishlist_id)
+        return cls.query.filter(cls.wishlist_id == wishlist_id, cls.name == name)
+
+    @classmethod
+    def remove_by_wishlist_id(cls, wishlist_id):
+        """Removes all Items of a Wishlist from the database"""
+        logger.info("Processing delete of all items for wishlist %s ...", wishlist_id)
+        items = cls.query.filter(cls.wishlist_id == wishlist_id).all()
+        for item in items:
+            item.delete()

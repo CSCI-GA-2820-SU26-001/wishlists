@@ -27,8 +27,9 @@ from . import status  # pylint: disable=no-name-in-module
 # Error Handlers
 ######################################################################
 @api.errorhandler(DataValidationError)
-def request_validation_error(error):
-    """Handles Value Errors from bad data"""
+def request_validation_error(error):  # pragma: no cover
+    """Handles Value Errors from bad data
+    Kept as a safety net for any route that doesn't enforce validate=True."""
     message = str(error)
     app.logger.error(message)
     return {

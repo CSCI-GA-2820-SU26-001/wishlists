@@ -492,7 +492,7 @@ class BaseTestCase(TestCase):
     def test_clear_items_not_found(self):
         """It should return 404 when clearing a missing wishlist"""
 
-        response = self.client.post(f"{BASE_URL}/99999/clear")
+        response = self.client.put(f"{BASE_URL}/99999/items/clear")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -543,6 +543,36 @@ class BaseTestCase(TestCase):
 
         for item in data:
             self.assertEqual(item["name"], name0)
+
+    def test_read_wishlist_not_found(self):
+        """It should return 404 when reading a missing wishlist"""
+        resp = self.client.get(f"{BASE_URL}/0")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_delete_all_wishlists_when_not_testing(self):
+        """It should NOT delete all wishlists when the system is not under test"""
+        # Create a wishlist so we have something that could be deleted
+        wishlist = WishlistFactory()
+        resp = self.client.post(BASE_URL, json=wishlist.serialize())
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+        # Temporarily flip TESTING off to force the else branch
+        original_testing = app.config.get("TESTING")
+        app.config["TESTING"] = False
+        try:
+            resp = self.client.delete(f"{BASE_URL}")
+        finally:
+            # Always restore TESTING so the rest of the suite isn't affected
+            app.config["TESTING"] = original_testing
+
+        # The endpoint should still respond, but nothing should be deleted
+        self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
+
+        # Confirm the wishlist created above still exists
+        resp = self.client.get(BASE_URL)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        data = resp.get_json()
+        self.assertGreaterEqual(len(data), 1)
 
     # ---------------------------------------------------------------
     # helper function

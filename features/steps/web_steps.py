@@ -5,6 +5,8 @@ Step definitions for Wishlist BDD tests
 import requests
 from behave import given, when, then
 
+BASE_URL = "api/wishlists"
+
 
 @given("the Wishlist BDD test environment is configured")
 def step_impl(context):
@@ -19,6 +21,7 @@ def step_impl(context):
     assert response.status_code == 200
     assert response.json()["status"] == "OK"
 
+
 @given("a wishlist exists")
 def step_impl(context):
     """Create a wishlist for update testing"""
@@ -30,7 +33,7 @@ def step_impl(context):
     }
 
     response = requests.post(
-        f"{context.base_url}/wishlists",
+        f"{context.base_url}{BASE_URL}",
         json=payload,
         timeout=5,
     )
@@ -39,6 +42,7 @@ def step_impl(context):
 
     context.wishlist = response.json()
     context.wishlist_id = context.wishlist["id"]
+
 
 @given("multiple wishlists exist")
 def step_impl(context):
@@ -65,11 +69,12 @@ def step_impl(context):
 
     for wishlist in wishlists:
         response = requests.post(
-            f"{context.base_url}/wishlists",
+            f"{context.base_url}{BASE_URL}",
             json=wishlist,
             timeout=5,
         )
         assert response.status_code == 201
+
 
 @when(
     'I create a wishlist with customer id "{customer_id}", '
@@ -85,10 +90,11 @@ def step_impl(context, customer_id, name, description):
     }
 
     context.response = requests.post(
-        f"{context.base_url}/wishlists",
+        f"{context.base_url}{BASE_URL}",
         json=payload,
         timeout=5,
     )
+
 
 @when(
     'I update the wishlist with customer id "{customer_id}", '
@@ -104,18 +110,20 @@ def step_impl(context, customer_id, name, description):
     }
 
     context.response = requests.put(
-        f"{context.base_url}/wishlists/{context.wishlist_id}",
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}",
         json=payload,
         timeout=5,
     )
 
+
 @when('I query wishlists with customer id "{customer_id}"')
 def step_impl(context, customer_id):
     context.response = requests.get(
-        f"{context.base_url}/wishlists",
+        f"{context.base_url}{BASE_URL}",
         params={"customer_id": customer_id},
         timeout=5,
     )
+
 
 @then("the response status code should be {status_code:d}")
 def step_impl(context, status_code):
@@ -143,6 +151,7 @@ def step_impl(context, description):
     data = context.response.json()
     assert data["description"] == description
 
+
 @then('only wishlists for customer id "{customer_id}" are returned')
 def step_impl(context, customer_id):
     wishlists = context.response.json()
@@ -151,6 +160,7 @@ def step_impl(context, customer_id):
 
     for wishlist in wishlists:
         assert str(wishlist["customer_id"]) == customer_id
+
 
 @given(
     'a wishlist exists with customer id "{customer_id}", '
@@ -166,7 +176,7 @@ def step_impl(context, customer_id, name, description):
     }
 
     response = requests.post(
-        f"{context.base_url}/wishlists",
+        f"{context.base_url}{BASE_URL}",
         json=payload,
         timeout=5,
     )
@@ -185,7 +195,7 @@ def step_impl(context, customer_id, name, description):
 def step_impl(context):
     """Delete the wishlist through the REST API"""
     context.response = requests.delete(
-        f"{context.base_url}/wishlists/{context.wishlist_id}",
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}",
         timeout=5,
     )
 
@@ -194,7 +204,7 @@ def step_impl(context):
 def step_impl(context):
     """Verify that the deleted wishlist returns 404"""
     response = requests.get(
-        f"{context.base_url}/wishlists/{context.wishlist_id}",
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}",
         timeout=5,
     )
 
@@ -208,7 +218,7 @@ def step_impl(context):
 def step_impl(context):
     """Read the wishlist through the REST API"""
     context.response = requests.get(
-        f"{context.base_url}/wishlists/{context.wishlist_id}",
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}",
         timeout=5,
     )
 
@@ -217,7 +227,7 @@ def step_impl(context):
 def step_impl(context):
     """List all wishlists through the REST API"""
     context.response = requests.get(
-        f"{context.base_url}/wishlists",
+        f"{context.base_url}{BASE_URL}",
         timeout=5,
     )
 
@@ -228,6 +238,6 @@ def step_impl(context, name):
     data = context.response.json()
     names = [wishlist["name"] for wishlist in data]
 
-    assert name in names, (
-        f"Expected wishlist named '{name}' in response list, got {data}"
-    )
+    assert (
+        name in names
+    ), f"Expected wishlist named '{name}' in response list, got {data}"

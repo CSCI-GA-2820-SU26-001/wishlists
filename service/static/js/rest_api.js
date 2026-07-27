@@ -2,6 +2,8 @@ $(function () {
 
     let current_wishlist_id = null;
 
+    const BASE_URL = "api/wishlists"
+
     // ****************************************
     //  U T I L I T Y   F U N C T I O N S
     // ****************************************
@@ -54,7 +56,7 @@ $(function () {
     $("#create-btn").click(function () {
 
         let name = $("#wishlist_name").val();
-        let cid = $("#customer_id").val();
+        let cid = parseInt($("#customer_id").val(),10)
         let description = $("#wishlist_description").val();
 
         let data = {
@@ -67,7 +69,7 @@ $(function () {
         
         let ajax = $.ajax({
             type: "POST",
-            url: "/wishlists",
+            url: `${BASE_URL}`,
             contentType: "application/json",
             data: JSON.stringify(data),
         });
@@ -79,8 +81,16 @@ $(function () {
         });
 
         ajax.fail(function(res){
-            flash_message(res.responseJSON.message)
+            let msg = res.responseJSON.message;
+            if (res.responseJSON.errors) {
+                msg += ": " + JSON.stringify(res.responseJSON.errors);
+            }
+            flash_message(msg);
         });
+
+        // ajax.fail(function(res){
+        //     flash_message(res.responseJSON.message)
+        // });
     });
 
 
@@ -92,7 +102,7 @@ $(function () {
 
         let wishlist_id = $("#wishlist_id").val();
         let name = $("#wishlist_name").val();
-        let cid = $("#customer_id").val();
+        let cid = parseInt($("#customer_id").val(),10)
         let description = $("#wishlist_description").val();
 
         let data = {
@@ -105,7 +115,7 @@ $(function () {
 
         let ajax = $.ajax({
                 type: "PUT",
-                url: `/wishlists/${wishlist_id}`,
+                url: `${BASE_URL}/${wishlist_id}`,
                 contentType: "application/json",
                 data: JSON.stringify(data)
             })
@@ -114,6 +124,7 @@ $(function () {
             update_wishlist_data(res)
             flash_message("Success")
             set_active_wishlist(res.id, res.name)
+            $("#search-btn").click();
         });
 
         ajax.fail(function(res){
@@ -134,7 +145,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/wishlists/${wishlist_id}`,
+            url: `${BASE_URL}/${wishlist_id}`,
             contentType: "application/json",
             data: ''
         })
@@ -165,7 +176,7 @@ $(function () {
 
         let ajax = $.ajax({
             type: "DELETE",
-            url: `/wishlists/${wishlist_id}`,
+            url: `${BASE_URL}/${wishlist_id}`,
             contentType: "application/json",
             data: '',
         })
@@ -197,23 +208,25 @@ $(function () {
     $("#search-btn").click(function () {
 
         let name = $("#wishlist_name").val();
-        let cid = $("#customer_id").val();
+        let cid = parseInt($("#customer_id").val(),10)
         let description = $("#wishlist_description").val();
 
-        let queryString = ""
+        let params = [];
 
         if (name) {
-            queryString += 'name=' + name
+            params.push('name=' + encodeURIComponent(name));
         }
         if (cid) {
-            queryString += 'customerid=' + cid
+            params.push('customer_id=' + encodeURIComponent(cid));
         }
+
+        let queryString = params.join('&');
 
         $("#flash_message").empty();
 
         let ajax = $.ajax({
             type: "GET",
-            url: `/wishlists?${queryString}`,
+            url: `${BASE_URL}?${queryString}`,
             contentType: "application/json",
             data: ''
         })
@@ -263,13 +276,14 @@ $(function () {
             return;
         }
         let data = {
+            wishlist_id: current_wishlist_id,
             name: $("#item_name").val(),
-            quantity: $("#item_quantity").val(),
+            quantity: parseInt($("#item_quantity").val(),10),
         };
 
         $.ajax({
             type: "POST",
-            url: `/wishlists/${current_wishlist_id}/items`,
+            url: `${BASE_URL}/${current_wishlist_id}/items`,
             contentType: "application/json",
             data: JSON.stringify(data),
         }).done(function (res) {
@@ -290,18 +304,19 @@ $(function () {
         }
         let item_id = $("#item_id").val();
         let name = $("#item_name").val();
-        let quantity = $("#item_quantity").val();
+        let quantity = parseInt($("#item_quantity").val(),10);
 
         let data = {
-            "name": name,
-            "quantity": quantity,
+            wishlist_id: current_wishlist_id,
+            name: name,
+            quantity: quantity,
         };
 
         $("#flash_message").empty();
 
         let ajax = $.ajax({
                 type: "PUT",
-                url: `/wishlists/${current_wishlist_id}/items/${item_id}`,
+                url: `${BASE_URL}/${current_wishlist_id}/items/${item_id}`,
                 contentType: "application/json",
                 data: JSON.stringify(data)
             })
@@ -309,6 +324,7 @@ $(function () {
         ajax.done(function(res){
             update_item_data(res)
             flash_message("Success")
+            $("#item-search-btn").click();
         });
 
         ajax.fail(function(res){
@@ -326,11 +342,11 @@ $(function () {
             flash_message("Please select a Wishlist first");
             return;
         }
-        let item_id = $("#item_id").val();
+        let item_id = parseInt($("#item_id").val(),10);
 
         $.ajax({
             type: "GET",
-            url: `/wishlists/${current_wishlist_id}/items/${item_id}`,
+            url: `${BASE_URL}/${current_wishlist_id}/items/${item_id}`,
             contentType: "application/json",
             data: '',
         }).done(function (res) {
@@ -351,7 +367,7 @@ $(function () {
         let item_id = $("#item_id").val();
         $.ajax({
             type: "DELETE",
-            url: `/wishlists/${current_wishlist_id}/items/${item_id}`,
+            url: `${BASE_URL}/${current_wishlist_id}/items/${item_id}`,
             contentType: "application/json",
             data: '',
         }).done(function (res) {
@@ -380,11 +396,20 @@ $(function () {
             flash_message("Please select a Wishlist first");
             return;
         }
+        let name = $("#item_name").val();
+        let params = [];
+        if (name) {
+            params.push('name=' + encodeURIComponent(name));
+        }
+        let queryString = params.join('&');
+        let url = `${BASE_URL}/${current_wishlist_id}/items`;
+        if (queryString) {
+            url += '?' + queryString;
+        }
         $.ajax({
             type: "GET",
-            url: `/wishlists/${current_wishlist_id}/items`,
+            url: url,
             contentType: "application/json",
-            data: '',
         }).done(function (res) {
             $("#item_search_results table tbody").remove();
             let table = '<tbody>';

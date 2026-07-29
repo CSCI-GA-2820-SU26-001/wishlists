@@ -75,6 +75,13 @@ class BaseTestCase(TestCase):
         resp = self.client.get("/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn(b"Wishlists Demo REST API Service", resp.data)
+        self.assertIn(b"API Documentation", resp.data)
+        self.assertIn(b"/apidocs", resp.data)
+
+    def test_api_docs(self):
+        """It should open the Swagger API documentation"""
+        resp = self.client.get("/apidocs", follow_redirects=True)
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
 
     def test_create_wishlist(self):
         """It should Create a new Wishlist"""

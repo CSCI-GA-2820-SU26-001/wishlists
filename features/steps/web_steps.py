@@ -76,6 +76,52 @@ def step_impl(context):
         assert response.status_code == 201
 
 
+@given("an item exists in the wishlist")
+def step_impl(context):
+    """Create an item for delete testing"""
+    payload = {
+        "wishlist_id": context.wishlist_id,
+        "name": "MacBook",
+        "quantity": 1,
+    }
+
+    response = requests.post(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items",
+        json=payload,
+        timeout=5,
+    )
+
+    assert (
+        response.status_code == 201
+    ), f"Expected 201, got {response.status_code}: {response.text}"
+
+    context.item = response.json()
+    context.item_id = context.item["id"]
+
+
+@given("multiple items exist in the wishlist")
+def step_impl(context):
+    """Create multiple items in the wishlist"""
+    items = [
+        {"wishlist_id": context.wishlist_id, "name": "MacBook", "quantity": 1},
+        {"wishlist_id": context.wishlist_id, "name": "iPhone", "quantity": 2},
+        {"wishlist_id": context.wishlist_id, "name": "iPad", "quantity": 3},
+    ]
+
+    context.items = []
+
+    for item in items:
+        response = requests.post(
+            f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items",
+            json=item,
+            timeout=5,
+        )
+
+        assert response.status_code == 201
+
+        context.items.append(response.json())
+
+
 @when(
     'I create a wishlist with customer id "{customer_id}", '
     'name "{name}", and description "{description}"'
@@ -200,6 +246,15 @@ def step_impl(context):
     )
 
 
+@when("I delete the item")
+def step_impl(context):
+    """Delete the item through the REST API"""
+    context.response = requests.delete(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items/{context.item_id}",
+        timeout=5,
+    )
+
+
 @then("the wishlist should no longer be available")
 def step_impl(context):
     """Verify that the deleted wishlist returns 404"""
@@ -214,11 +269,43 @@ def step_impl(context):
     )
 
 
+@then("the item should no longer be available")
+def step_impl(context):
+    """Verify that the deleted item returns 404"""
+    response = requests.get(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items/{context.item_id}",
+        timeout=5,
+    )
+
+    assert response.status_code == 404, (
+        f"Expected deleted item to return 404, "
+        f"got {response.status_code}: {response.text}"
+    )
+
+
 @when("I request the wishlist")
 def step_impl(context):
     """Read the wishlist through the REST API"""
     context.response = requests.get(
         f"{context.base_url}{BASE_URL}/{context.wishlist_id}",
+        timeout=5,
+    )
+
+
+@when("I request the item")
+def step_impl(context):
+    """Read an item through the REST API"""
+    context.response = requests.get(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items/{context.item_id}",
+        timeout=5,
+    )
+
+
+@when("I request all items")
+def step_impl(context):
+    """List all items in the wishlist"""
+    context.response = requests.get(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items",
         timeout=5,
     )
 
@@ -241,3 +328,28 @@ def step_impl(context, name):
     assert (
         name in names
     ), f"Expected wishlist named '{name}' in response list, got {data}"
+
+
+@then("the response should contain the item information")
+def step_impl(context):
+    """Verify the returned item information"""
+    data = context.response.json()
+
+    assert data["id"] == context.item_id
+    assert data["wishlist_id"] == context.wishlist_id
+    assert data["name"] == context.item["name"]
+    assert data["quantity"] == context.item["quantity"]
+
+
+@then("the response should contain all existing items")
+def step_impl(context):
+    """Verify all existing items are returned"""
+    data = context.response.json()
+
+    assert len(data) == len(context.items)
+
+    returned_names = [item["name"] for item in data]
+    expected_names = [item["name"] for item in context.items]
+
+    for name in expected_names:
+        assert name in returned_names

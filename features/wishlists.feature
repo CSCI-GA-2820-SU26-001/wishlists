@@ -59,3 +59,19 @@ Feature: Wishlist Management
         When I delete the item
         Then the response status code should be 204
         And the item should no longer be available
+    
+    Scenario: Read an existing item
+        Given the wishlist service is running
+        And a wishlist exists
+        And an item exists in the wishlist
+        When I request the item
+        Then the response status code should be 200
+        And the response should contain the item information
+
+    Scenario: List all items
+        Given the wishlist service is running
+        And a wishlist exists
+        And multiple items exist in the wishlist
+        When I request all items
+        Then the response status code should be 200
+        And the response should contain all existing items

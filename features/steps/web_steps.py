@@ -76,6 +76,29 @@ def step_impl(context):
         assert response.status_code == 201
 
 
+@given("an item exists in the wishlist")
+def step_impl(context):
+    """Create an item for delete testing"""
+    payload = {
+        "wishlist_id": context.wishlist_id,
+        "name": "MacBook",
+        "quantity": 1,
+    }
+
+    response = requests.post(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items",
+        json=payload,
+        timeout=5,
+    )
+
+    assert (
+        response.status_code == 201
+    ), f"Expected 201, got {response.status_code}: {response.text}"
+
+    context.item = response.json()
+    context.item_id = context.item["id"]
+
+
 @when(
     'I create a wishlist with customer id "{customer_id}", '
     'name "{name}", and description "{description}"'
@@ -200,6 +223,15 @@ def step_impl(context):
     )
 
 
+@when("I delete the item")
+def step_impl(context):
+    """Delete the item through the REST API"""
+    context.response = requests.delete(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items/{context.item_id}",
+        timeout=5,
+    )
+
+
 @then("the wishlist should no longer be available")
 def step_impl(context):
     """Verify that the deleted wishlist returns 404"""
@@ -210,6 +242,20 @@ def step_impl(context):
 
     assert response.status_code == 404, (
         f"Expected deleted wishlist to return 404, "
+        f"got {response.status_code}: {response.text}"
+    )
+
+
+@then("the item should no longer be available")
+def step_impl(context):
+    """Verify that the deleted item returns 404"""
+    response = requests.get(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items/{context.item_id}",
+        timeout=5,
+    )
+
+    assert response.status_code == 404, (
+        f"Expected deleted item to return 404, "
         f"got {response.status_code}: {response.text}"
     )
 

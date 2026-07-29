@@ -51,3 +51,11 @@ Feature: Wishlist Management
         When I query wishlists with customer id "1001"
         Then the response status code should be 200
         And only wishlists for customer id "1001" are returned
+    
+    Scenario: Delete an existing item
+        Given the wishlist service is running
+        And a wishlist exists
+        And an item exists in the wishlist
+        When I delete the item
+        Then the response status code should be 204
+        And the item should no longer be available

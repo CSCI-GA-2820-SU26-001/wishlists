@@ -1,0 +1,72 @@
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: wishlist-trigger-binding
+spec:
+  params:
+    - name: repo-url
+      value: $(body.repository.clone_url)
+    - name: revision
+      value: $(body.after)
+    - name: image
+      value: image-registry.openshift-image-registry.svc:5000/wishlist/wishlist:latest
+    - name: deploy-namespace
+      value: wishlist
+    - name: insecure-registry
+      value: "false"
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: wishlist-trigger-template
+spec:
+  params:
+    - name: repo-url
+      description: The Git repository URL
+    - name: revision
+      description: The Git revision to build
+    - name: image
+      description: The image to build and deploy
+    - name: deploy-namespace
+      description: The Kubernetes or OpenShift namespace to deploy into
+    - name: insecure-registry
+      description: Whether the image registry should skip TLS verification
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: wishlist-cd-run-
+      spec:
+        pipelineRef:
+          name: wishlist-cd
+        params:
+          - name: repo-url
+            value: $(tt.params.repo-url)
+          - name: revision
+            value: $(tt.params.revision)
+          - name: image
+            value: $(tt.params.image)
+          - name: deploy-namespace
+            value: $(tt.params.deploy-namespace)
+          - name: insecure-registry
+            value: $(tt.params.insecure-registry)
+        workspaces:
+          - name: source
+            persistentVolumeClaim:
+              claimName: pipeline-workspace
+
+---
+apiVersion: triggers.tekton.dev/v1beta1
+kind: EventListener
+metadata:
+  name: wishlist-event-listener
+spec:
+  serviceAccountName: pipeline
+  triggers:
+    - name: wishlist-github-trigger
+      bindings:
+        - ref: wishlist-trigger-binding
+      template:
+        ref: wishlist-trigger-template

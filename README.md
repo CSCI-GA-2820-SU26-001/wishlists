@@ -27,7 +27,7 @@ name
 customer_id
 ```
 
-Future wishlist item support will include product items that belong to a wishlist.
+Wishlist item support is implemented. Each wishlist can contain multiple items.
 
 ## Current API
 
@@ -37,38 +37,44 @@ Future wishlist item support will include product items that belong to a wishlis
 GET /
 ```
 
-Returns basic information about the service.
+Returns the web UI for the Wishlists service.
 
-Example response:
+### Health Endpoint
 
-```json
-{
-  "name": "Wishlists Service",
-  "version": "1.0.0",
-  "list_url": "/wishlists"
-}
+```http
+GET /health
 ```
 
-## Planned API Endpoints
+Returns the service health status.
 
-The following endpoints are planned for the Wishlists service:
+### Swagger Documentation
 
-```text
-POST   /wishlists
-GET    /wishlists
-GET    /wishlists/{wishlist_id}
-PUT    /wishlists/{wishlist_id}
-DELETE /wishlists/{wishlist_id}
+```http
+GET /apidocs
 ```
 
-The following item endpoints are planned for wishlist items:
+Opens the Swagger API documentation.
+
+## API Endpoints
+
+The following endpoints are supported by the Wishlists service:
 
 ```text
-POST   /wishlists/{wishlist_id}/items
-GET    /wishlists/{wishlist_id}/items
-GET    /wishlists/{wishlist_id}/items/{item_id}
-PUT    /wishlists/{wishlist_id}/items/{item_id}
-DELETE /wishlists/{wishlist_id}/items/{item_id}
+POST   /api/wishlists
+GET    /api/wishlists
+GET    /api/wishlists/{wishlist_id}
+PUT    /api/wishlists/{wishlist_id}
+DELETE /api/wishlists/{wishlist_id}
+```
+
+The following item endpoints are supported for wishlist items:
+
+```text
+POST   /api/wishlists/{wishlist_id}/items
+GET    /api/wishlists/{wishlist_id}/items
+GET    /api/wishlists/{wishlist_id}/items/{item_id}
+PUT    /api/wishlists/{wishlist_id}/items/{item_id}
+DELETE /api/wishlists/{wishlist_id}/items/{item_id}
 ```
 
 ## Project Structure
@@ -168,6 +174,67 @@ Every push and pull request automatically runs:
 ## API Testing
 
 The REST API can be tested using the REST Client extension in Visual Studio Code or any HTTP client such as curl or Postman.
+
+## Final Project Notes
+
+### Swagger API Documentation
+
+Swagger API documentation is available at `/apidocs`.
+
+When running locally, open:
+
+```text
+http://localhost:8080/apidocs
+```
+
+The root page also includes a link to the API documentation.
+
+### API Prefix
+
+The Flask-RESTX API uses the `/api` prefix.
+
+Example endpoints:
+
+```http
+GET /api/wishlists
+POST /api/wishlists
+```
+
+### BDD Tests
+
+BDD tests are located in the `features/` directory and are written using Behave and Selenium.
+
+Run BDD tests with:
+
+```bash
+pipenv run behave
+```
+
+To test against a deployed service, set `BASE_URL`:
+
+```bash
+BASE_URL=http://localhost:8080 pipenv run behave
+```
+
+### Tekton Pipeline
+
+Tekton resources are located in the `tekton/` directory. The pipeline resources support tasks such as linting, testing, building the image, and deploying the service.
+
+### OpenShift Deployment
+
+The final OpenShift Route URL should be added after deployment:
+
+```text
+OpenShift Route URL: TBD after final deployment
+```
+
+After deployment, verify that:
+
+```text
+/health returns {"status": "OK"}
+/apidocs opens successfully
+BDD tests pass against the deployed route
+```
 
 ## License
 

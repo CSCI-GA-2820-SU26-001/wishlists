@@ -75,3 +75,12 @@ Feature: Wishlist Management
         When I request all items
         Then the response status code should be 200
         And the response should contain all existing items
+
+    Scenario: Update an item in a wishlist
+        Given the wishlist service is running
+        And a wishlist exists
+        And an item exists in the wishlist
+        When I update the item with name "Updated Item" and quantity "5"
+        Then the response status code should be 200
+        And the response should contain item name "Updated Item"
+        And the response should contain quantity "5"

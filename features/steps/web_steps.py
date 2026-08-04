@@ -310,6 +310,22 @@ def step_impl(context):
     )
 
 
+@when('I update the item with name "{name}" and quantity "{quantity}"')
+def step_impl(context, name, quantity):
+    """Update an existing item"""
+    payload = {
+        "wishlist_id": context.wishlist_id,
+        "name": name,
+        "quantity": int(quantity),
+    }
+
+    context.response = requests.put(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items/{context.item_id}",
+        json=payload,
+        timeout=5,
+    )
+
+
 @when("I request all wishlists")
 def step_impl(context):
     """List all wishlists through the REST API"""
@@ -341,6 +357,13 @@ def step_impl(context):
     assert data["quantity"] == context.item["quantity"]
 
 
+@then('the response should contain item name "{name}"')
+def step_impl(context, name):
+    """Verify updated item name"""
+    data = context.response.json()
+    assert data["name"] == name
+
+
 @then("the response should contain all existing items")
 def step_impl(context):
     """Verify all existing items are returned"""
@@ -353,3 +376,10 @@ def step_impl(context):
 
     for name in expected_names:
         assert name in returned_names
+
+
+@then('the response should contain quantity "{quantity}"')
+def step_impl(context, quantity):
+    """Verify updated item quantity"""
+    data = context.response.json()
+    assert data["quantity"] == int(quantity)

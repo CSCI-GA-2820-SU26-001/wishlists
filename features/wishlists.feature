@@ -52,6 +52,15 @@ Feature: Wishlist Management
         Then the response status code should be 200
         And only wishlists for customer id "1001" are returned
     
+    Scenario: Create a new item
+        Given the wishlist service is running
+        And a wishlist exists
+        When I create an item with name "New Item" and quantity "2"
+        Then the response status code should be 201
+        And the response should contain the correct wishlist id
+        And the response should contain name "New Item"
+        And the response should contain quantity "2"
+
     Scenario: Delete an existing item
         Given the wishlist service is running
         And a wishlist exists

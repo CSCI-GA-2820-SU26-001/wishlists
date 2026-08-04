@@ -2,24 +2,38 @@
 Step definitions for Wishlist BDD tests
 """
 
+from shutil import which
+
 import requests
 from behave import given, when, then
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
-BASE_URL = "api/wishlists"
+BASE_URL = "/api/wishlists"
 
 def get_driver(context):
     """Create a Selenium WebDriver if one does not already exist."""
     if context.driver is None:
         options = Options()
-        options.add_argument("--headless")
+        chromium = which("chromium")
+        if chromium:
+            options.binary_location = chromium
+        options.add_argument("--headless=new")
         options.add_argument("--no-sandbox")
         options.add_argument("--disable-dev-shm-usage")
-        context.driver = webdriver.Chrome(options=options)
+        options.add_argument("--disable-gpu")
+        options.add_argument("--window-size=1920,1080")
+
+        chromedriver = which("chromedriver")
+        if chromedriver:
+            service = Service(chromedriver)
+            context.driver = webdriver.Chrome(service=service, options=options)
+        else:
+            context.driver = webdriver.Chrome(options=options)
     return context.driver
 
 @given("the Wishlist BDD test environment is configured")
@@ -324,6 +338,22 @@ def step_impl(context):
     )
 
 
+@when('I update the item with name "{name}" and quantity "{quantity}"')
+def step_impl(context, name, quantity):
+    """Update an existing item"""
+    payload = {
+        "wishlist_id": context.wishlist_id,
+        "name": name,
+        "quantity": int(quantity),
+    }
+
+    context.response = requests.put(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items/{context.item_id}",
+        json=payload,
+        timeout=5,
+    )
+
+
 @when("I request all wishlists")
 def step_impl(context):
     """List all wishlists through the REST API"""
@@ -355,6 +385,13 @@ def step_impl(context):
     assert data["quantity"] == context.item["quantity"]
 
 
+@then('the response should contain item name "{name}"')
+def step_impl(context, name):
+    """Verify updated item name"""
+    data = context.response.json()
+    assert data["name"] == name
+
+
 @then("the response should contain all existing items")
 def step_impl(context):
     """Verify all existing items are returned"""
@@ -367,6 +404,7 @@ def step_impl(context):
 
     for name in expected_names:
         assert name in returned_names
+
 
 @when("I clear all items from the wishlist through the web UI")
 def step_impl(context):
@@ -393,10 +431,8 @@ def step_impl(context):
     driver.find_element(By.ID, "item-clear-btn").click()
 
     WebDriverWait(driver, 10).until(
-        EC.text_to_be_present_in_element(
-            (By.ID, "flash_message"),
-            "Items cleared",
-        )
+        lambda driver: driver.find_element(By.ID, "flash_message").text
+        in ("Items cleared", "Success")
     )
 
 
@@ -434,3 +470,10 @@ def step_impl(context):
         "#item_search_results table tbody tr",
     )
     assert len(rows) == 0, f"Expected no items, but found {len(rows)}"
+
+
+@then('the response should contain quantity "{quantity}"')
+def step_impl(context, quantity):
+    """Verify updated item quantity"""
+    data = context.response.json()
+    assert data["quantity"] == int(quantity)

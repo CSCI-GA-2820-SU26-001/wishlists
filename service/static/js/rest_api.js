@@ -378,13 +378,30 @@ $(function () {
     });
 
     // ****************************************
-    // Clear the item form
+    // Clear all Items from current Wishlist
     // ****************************************
 
     $("#item-clear-btn").click(function () {
-        $("#item_id").val("");
+        if (!current_wishlist_id) {
+            flash_message("Please select a Wishlist first");
+            return;
+        }
+
         $("#flash_message").empty();
-        clear_item_data()
+
+        $.ajax({
+            type: "PUT",
+            url: `${BASE_URL}/${current_wishlist_id}/items/clear`,
+            contentType: "application/json",
+            data: '',
+        }).done(function () {
+            $("#item_id").val("");
+            clear_item_data();
+            $("#item-search-btn").click();
+            flash_message("Items cleared");
+        }).fail(function (res) {
+            flash_message(res.responseJSON.message);
+        });
     });
 
     // ****************************************

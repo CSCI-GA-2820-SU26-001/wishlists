@@ -76,6 +76,15 @@ Feature: Wishlist Management
         Then the response status code should be 200
         And the response should contain all existing items
 
+    Scenario: Clear all items from a wishlist through the web UI
+        Given the wishlist service is running
+        And a wishlist exists
+        And multiple items exist in the wishlist
+        When I clear all items from the wishlist through the web UI
+        And I search for items in the wishlist through the web UI
+        Then the wishlist should still exist
+        And the wishlist should contain no items
+
     Scenario: Update an item in a wishlist
         Given the wishlist service is running
         And a wishlist exists

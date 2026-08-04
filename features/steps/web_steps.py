@@ -4,9 +4,23 @@ Step definitions for Wishlist BDD tests
 
 import requests
 from behave import given, when, then
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 BASE_URL = "api/wishlists"
 
+def get_driver(context):
+    """Create a Selenium WebDriver if one does not already exist."""
+    if context.driver is None:
+        options = Options()
+        options.add_argument("--headless")
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        context.driver = webdriver.Chrome(options=options)
+    return context.driver
 
 @given("the Wishlist BDD test environment is configured")
 def step_impl(context):
@@ -353,3 +367,70 @@ def step_impl(context):
 
     for name in expected_names:
         assert name in returned_names
+
+@when("I clear all items from the wishlist through the web UI")
+def step_impl(context):
+    """Clear all items from the active wishlist through the browser UI."""
+    base_url = context.base_url.rstrip("/") + "/"
+
+    driver = get_driver(context)
+    driver.get(base_url)
+
+    wishlist_id_input = driver.find_element(By.ID, "wishlist_id")
+    wishlist_id_input.clear()
+    wishlist_id_input.send_keys(str(context.wishlist_id))
+
+    driver.find_element(By.ID, "retrieve-btn").click()
+
+    WebDriverWait(driver, 10).until(
+        EC.text_to_be_present_in_element(
+            (By.ID, "active_wishlist_id"),
+            str(context.wishlist_id),
+        )
+    )
+
+    driver.find_element(By.ID, "item-search-btn").click()
+    driver.find_element(By.ID, "item-clear-btn").click()
+
+    WebDriverWait(driver, 10).until(
+        EC.text_to_be_present_in_element(
+            (By.ID, "flash_message"),
+            "Items cleared",
+        )
+    )
+
+
+@when("I search for items in the wishlist through the web UI")
+def step_impl(context):
+    """Refresh item search results through the browser UI."""
+    driver = get_driver(context)
+    driver.find_element(By.ID, "item-search-btn").click()
+
+    WebDriverWait(driver, 10).until(
+        EC.text_to_be_present_in_element(
+            (By.ID, "flash_message"),
+            "Success",
+        )
+    )
+
+
+@then("the wishlist should still exist")
+def step_impl(context):
+    """Verify the wishlist still exists after clearing its items."""
+    base_url = context.base_url.rstrip("/")
+    response = requests.get(
+        f"{base_url}/api/wishlists/{context.wishlist_id}",
+        timeout=5,
+    )
+    assert response.status_code == 200
+
+
+@then("the wishlist should contain no items")
+def step_impl(context):
+    """Verify the item search results are empty."""
+    driver = get_driver(context)
+    rows = driver.find_elements(
+        By.CSS_SELECTOR,
+        "#item_search_results table tbody tr",
+    )
+    assert len(rows) == 0, f"Expected no items, but found {len(rows)}"

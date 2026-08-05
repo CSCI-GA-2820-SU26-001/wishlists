@@ -414,11 +414,24 @@ def step_impl(context):
     base_url = context.base_url.rstrip("/") + "/"
 
     driver = get_driver(context)
-    driver.get(base_url)
 
-    wishlist_id_input = WebDriverWait(driver, 15).until(
-        EC.presence_of_element_located((By.ID, "wishlist_id"))
-    )
+    wishlist_id_input = None
+    last_error = None
+
+    for _ in range(12):
+        driver.get(base_url)
+        try:
+            wishlist_id_input = WebDriverWait(driver, 5).until(
+                EC.presence_of_element_located((By.ID, "wishlist_id"))
+            )
+            break
+        except Exception as error:
+            last_error = error
+
+    if wishlist_id_input is None:
+        print("Current URL:", driver.current_url)
+        print("Page source head:", driver.page_source[:1000])
+        raise last_error
     wishlist_id_input.clear()
     wishlist_id_input.send_keys(str(context.wishlist_id))
 

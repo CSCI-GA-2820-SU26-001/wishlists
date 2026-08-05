@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 
 BASE_URL = "/api/wishlists"
 
+
 def get_driver(context):
     """Create a Selenium WebDriver if one does not already exist."""
     if context.driver is None:
@@ -35,6 +36,7 @@ def get_driver(context):
         else:
             context.driver = webdriver.Chrome(options=options)
     return context.driver
+
 
 @given("the Wishlist BDD test environment is configured")
 def step_impl(context):
@@ -477,3 +479,26 @@ def step_impl(context, quantity):
     """Verify updated item quantity"""
     data = context.response.json()
     assert data["quantity"] == int(quantity)
+
+
+@when('I create an item with name "{name}" and quantity "{quantity}"')
+def step_impl(context, name, quantity):
+    """Create an item through the REST API"""
+    payload = {
+        "wishlist_id": int(context.wishlist_id),
+        "name": name,
+        "quantity": int(quantity),
+    }
+
+    context.response = requests.post(
+        f"{context.base_url}{BASE_URL}/{context.wishlist_id}/items",
+        json=payload,
+        timeout=5,
+    )
+
+
+@then("the response should contain the correct wishlist id")
+def step_impl(context):
+    """Verify the created item has the right wishlist_id"""
+    data = context.response.json()
+    assert data["wishlist_id"] == int(context.wishlist_id)

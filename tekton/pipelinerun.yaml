@@ -13,7 +13,7 @@ spec:
     - name: repo-url
       value: https://github.com/CSCI-GA-2820-SU26-001/wishlists.git
     - name: revision
-      value: master
+      value: final-openshift-pipeline-validation
     - name: image
       value: image-registry.openshift-image-registry.svc:5000/kongzei-dev/wishlist:latest
     - name: base-url

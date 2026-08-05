@@ -1,0 +1,10 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: wishlist
+spec:
+  to:
+    kind: Service
+    name: wishlist
+  port:
+    targetPort: http

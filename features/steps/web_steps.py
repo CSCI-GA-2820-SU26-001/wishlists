@@ -416,7 +416,9 @@ def step_impl(context):
     driver = get_driver(context)
     driver.get(base_url)
 
-    wishlist_id_input = driver.find_element(By.ID, "wishlist_id")
+    wishlist_id_input = WebDriverWait(driver, 15).until(
+        EC.presence_of_element_located((By.ID, "wishlist_id"))
+    )
     wishlist_id_input.clear()
     wishlist_id_input.send_keys(str(context.wishlist_id))
 

@@ -24,11 +24,37 @@ spec:
       script: |
         #!/bin/sh
         set -eu
-        test -z "$(ls -A .)" || { echo "source workspace must be empty"; exit 1; }
+        export HOME=/tmp
+        rm -rf ./* ./.??* || true
+        git config --global --add safe.directory "$(workspaces.source.path)"
         git init
         git remote add origin "$REPO_URL"
         git fetch --depth 1 origin "$REVISION"
         git checkout --detach FETCH_HEAD
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: wishlist-lint
+spec:
+  description: Run code quality checks.
+  workspaces:
+    - name: source
+  steps:
+    - name: lint
+      image: quay.io/rofrano/nyu-devops-base:sp26
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/bin/bash
+        set -euo pipefail
+        export HOME=/tmp
+        export XDG_CACHE_HOME=/tmp/.cache
+        export PIP_CACHE_DIR=/tmp/pip-cache
+        python -m pip install --disable-pip-version-check pipenv
+        pipenv sync --system --dev
+        python -m flake8 service tests features --per-file-ignores='features/steps/*.py:F811 service/models/__init__.py:F401'
+        python -m pylint service tests || true
 
 ---
 apiVersion: tekton.dev/v1
@@ -44,13 +70,14 @@ spec:
       image: quay.io/rofrano/nyu-devops-base:sp26
       workingDir: $(workspaces.source.path)
       env:
-        - name: RETRY_COUNT
-          value: "1"
         - name: DATABASE_URI
           value: postgresql+psycopg://postgres:postgres@postgres:5432/wishlists
       script: |
         #!/bin/bash
         set -euo pipefail
+        export HOME=/tmp
+        export XDG_CACHE_HOME=/tmp/.cache
+        export PIP_CACHE_DIR=/tmp/pip-cache
         python -m pip install --disable-pip-version-check pipenv
         pipenv sync --system --dev
         python -m pytest --pspec --cov=service --cov-fail-under=95 --disable-warnings
@@ -61,37 +88,20 @@ kind: Task
 metadata:
   name: wishlist-build
 spec:
-  description: Build and push the application image with Kaniko inside Kubernetes.
-  params:
-    - name: image
-      type: string
-    - name: insecure-registry
-      type: string
-      default: "false"
+  description: Build the Wishlist image using the OpenShift BuildConfig.
   workspaces:
     - name: source
   steps:
-    - name: build-and-push
-      image: gcr.io/kaniko-project/executor:v1.23.2-debug
+    - name: build
+      image: quay.io/openshift/origin-cli:4.16
       workingDir: $(workspaces.source.path)
-      env:
-        - name: TARGET_IMAGE
-          value: $(params.image)
-        - name: INSECURE_REGISTRY
-          value: $(params.insecure-registry)
       script: |
-        #!/busybox/sh
+        #!/bin/sh
         set -eu
-        registry_flags=""
-        if [ "$INSECURE_REGISTRY" = "true" ]; then
-          registry_flags="--insecure --skip-tls-verify"
+        if ! oc get buildconfig wishlist >/dev/null 2>&1; then
+          oc new-build --name=wishlist --binary --strategy=docker
         fi
-        /kaniko/executor \
-          --context "$(workspaces.source.path)" \
-          --dockerfile "$(workspaces.source.path)/Dockerfile" \
-          --destination "$TARGET_IMAGE" \
-          --snapshot-mode=redo \
-          $registry_flags
+        oc start-build wishlist --from-dir="$(workspaces.source.path)" --follow
 
 ---
 apiVersion: tekton.dev/v1
@@ -99,13 +109,11 @@ kind: Task
 metadata:
   name: wishlist-deploy
 spec:
-  description: Apply Kubernetes manifests, deploy the built image, and verify rollout.
+  description: Deploy PostgreSQL, Wishlist service, and OpenShift Route.
   params:
     - name: image
       type: string
-    - name: namespace
-      type: string
-      default: default
+      default: image-registry.openshift-image-registry.svc:5000/$(context.taskRun.namespace)/wishlist:latest
   workspaces:
     - name: source
   steps:
@@ -115,13 +123,49 @@ spec:
       env:
         - name: TARGET_IMAGE
           value: $(params.image)
-        - name: DEPLOY_NAMESPACE
-          value: $(params.namespace)
       script: |
         #!/bin/sh
         set -eu
-        kubectl apply -n "$DEPLOY_NAMESPACE" -R -f k8s/
-        kubectl set image -n "$DEPLOY_NAMESPACE" \
-          deployment/wishlist wishlist="$TARGET_IMAGE"
-        kubectl rollout status -n "$DEPLOY_NAMESPACE" \
-          deployment/wishlist --timeout=180s
+        oc apply -f k8s/postgres/service.yaml
+        oc apply -f k8s/postgres/statefulset.yaml
+        oc apply -f k8s/service.yaml
+        oc apply -f k8s/deployment.yaml
+        oc apply -f openshift/route.yaml
+
+        oc set image deployment/wishlist wishlist="$TARGET_IMAGE"
+
+        oc set env deployment/wishlist \
+          FLASK_APP=wsgi:app \
+          PORT=8080 \
+          DATABASE_URI=postgresql+psycopg://postgres:postgres@postgres:5432/wishlists
+
+        oc rollout status deployment/wishlist --timeout=180s
+
+---
+apiVersion: tekton.dev/v1
+kind: Task
+metadata:
+  name: wishlist-bdd
+spec:
+  description: Run Selenium BDD tests against the deployed OpenShift Route.
+  params:
+    - name: base-url
+      type: string
+  workspaces:
+    - name: source
+  steps:
+    - name: bdd
+      image: quay.io/rofrano/pipeline-selenium:latest
+      workingDir: $(workspaces.source.path)
+      env:
+        - name: BASE_URL
+          value: $(params.base-url)
+      script: |
+        #!/bin/bash
+        set -euo pipefail
+        export HOME=/tmp
+        export XDG_CACHE_HOME=/tmp/.cache
+        export PIP_CACHE_DIR=/tmp/pip-cache
+        python -m pip install --disable-pip-version-check pipenv
+        pipenv sync --system --dev
+        python -m behave

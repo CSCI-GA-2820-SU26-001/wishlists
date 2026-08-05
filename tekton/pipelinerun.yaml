@@ -17,7 +17,7 @@ spec:
     - name: image
       value: image-registry.openshift-image-registry.svc:5000/kongzei-dev/wishlist:latest
     - name: base-url
-      value: http://wishlist-kongzei-dev.apps.rm1.0a51.p1.openshiftapps.com
+      value: https://wishlist-kongzei-dev.apps.rm1.0a51.p1.openshiftapps.com/
   workspaces:
     - name: source
       volumeClaimTemplate:

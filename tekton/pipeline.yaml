@@ -3,7 +3,7 @@ kind: Pipeline
 metadata:
   name: wishlist-cd
 spec:
-  description: Clone, test, build, and deploy the Wishlist service.
+  description: Clone, lint, test, build, deploy, and run BDD tests for the Wishlist service.
   params:
     - name: repo-url
       type: string
@@ -12,12 +12,10 @@ spec:
       default: master
     - name: image
       type: string
-    - name: deploy-namespace
+      default: image-registry.openshift-image-registry.svc:5000/$(context.pipelineRun.namespace)/wishlist:latest
+    - name: base-url
       type: string
-      default: default
-    - name: insecure-registry
-      type: string
-      default: "false"
+      default: https://wishlist-kongzei-dev.apps.rm1.0a51.p1.openshiftapps.com/
   workspaces:
     - name: source
   tasks:
@@ -33,6 +31,14 @@ spec:
         - name: source
           workspace: source
 
+    - name: lint
+      runAfter: [clone]
+      taskRef:
+        name: wishlist-lint
+      workspaces:
+        - name: source
+          workspace: source
+
     - name: test
       runAfter: [clone]
       taskRef:
@@ -42,14 +48,9 @@ spec:
           workspace: source
 
     - name: build
-      runAfter: [test]
+      runAfter: [lint, test]
       taskRef:
         name: wishlist-build
-      params:
-        - name: image
-          value: $(params.image)
-        - name: insecure-registry
-          value: $(params.insecure-registry)
       workspaces:
         - name: source
           workspace: source
@@ -61,8 +62,17 @@ spec:
       params:
         - name: image
           value: $(params.image)
-        - name: namespace
-          value: $(params.deploy-namespace)
+      workspaces:
+        - name: source
+          workspace: source
+
+    - name: bdd
+      runAfter: [deploy]
+      taskRef:
+        name: wishlist-bdd
+      params:
+        - name: base-url
+          value: $(params.base-url)
       workspaces:
         - name: source
           workspace: source

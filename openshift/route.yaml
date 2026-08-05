@@ -8,3 +8,6 @@ spec:
     name: wishlist
   port:
     targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
